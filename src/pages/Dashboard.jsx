@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, Play, Wallet, ArrowDownToLine, ShieldCheck } from 'lucide-react';
+import { LogOut, Play, Wallet, ArrowDownToLine } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Dashboard({ userId, onLogout, onNavigate }) {
@@ -113,16 +113,6 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
         <p className="text-white/50 text-xs mb-1">Tu código de referido</p>
         <p className="font-mono text-lg text-[#2FE0B0]">{profile?.referral_code}</p>
       </div>
-
-      {/* Acceso admin */}
-      {profile?.is_admin && (
-        <button
-          onClick={() => onNavigate('admin')}
-          className="flex items-center gap-2 text-white/40 text-sm mt-6 mx-auto"
-        >
-          <ShieldCheck size={15} /> Panel admin
-        </button>
-      )}
     </div>
   );
 }
