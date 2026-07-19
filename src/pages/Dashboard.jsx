@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { LogOut, Play, Wallet } from 'lucide-react';
+import { LogOut, Play, Wallet, ArrowDownToLine, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-export default function Dashboard({ userId, onLogout }) {
+export default function Dashboard({ userId, onLogout, onNavigate }) {
   const [profile, setProfile] = useState(null);
   const [activePackage, setActivePackage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +68,12 @@ export default function Dashboard({ userId, onLogout }) {
         <p className="font-mono text-4xl font-700">
           ${Number(profile?.available_balance || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
         </p>
+        <button
+          onClick={() => onNavigate('withdraw')}
+          className="flex items-center gap-1.5 text-[#2FE0B0] text-sm font-semibold mt-4"
+        >
+          <ArrowDownToLine size={15} /> Retirar
+        </button>
       </div>
 
       {/* Paquete activo */}
@@ -82,6 +88,7 @@ export default function Dashboard({ userId, onLogout }) {
               <p className="text-white/40 text-xs">videos restantes hoy</p>
             </div>
             <button
+              onClick={() => onNavigate('watch')}
               disabled={videosLeft <= 0}
               className="flex items-center gap-2 bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold px-6 py-3 rounded-full disabled:opacity-30"
             >
@@ -92,7 +99,10 @@ export default function Dashboard({ userId, onLogout }) {
       ) : (
         <div className="card-glow rounded-2xl p-6 bg-[#0F0D14] mt-4 text-center">
           <p className="text-white/60 text-sm mb-4">No tienes un paquete activo todavía.</p>
-          <button className="bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold px-6 py-3 rounded-full">
+          <button
+            onClick={() => onNavigate('buy')}
+            className="bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold px-6 py-3 rounded-full"
+          >
             Comprar paquete
           </button>
         </div>
@@ -103,6 +113,16 @@ export default function Dashboard({ userId, onLogout }) {
         <p className="text-white/50 text-xs mb-1">Tu código de referido</p>
         <p className="font-mono text-lg text-[#2FE0B0]">{profile?.referral_code}</p>
       </div>
+
+      {/* Acceso admin */}
+      {profile?.is_admin && (
+        <button
+          onClick={() => onNavigate('admin')}
+          className="flex items-center gap-2 text-white/40 text-sm mt-6 mx-auto"
+        >
+          <ShieldCheck size={15} /> Panel admin
+        </button>
+      )}
     </div>
   );
 }
