@@ -2,10 +2,16 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
+// Supabase Auth requiere un "email" internamente. Como no queremos pedirlo,
+// generamos uno invisible a partir del teléfono. El usuario nunca lo ve.
+function phoneToInternalEmail(phone) {
+  const clean = phone.replace(/\D/g, ''); // solo dígitos
+  return `tel${clean}@vadia.app`;
+}
+
 export default function Auth({ mode: initialMode, onBack, onAuthed }) {
   const [mode, setMode] = useState(initialMode || 'register'); // 'register' | 'login'
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [refCode, setRefCode] = useState('');
@@ -19,17 +25,35 @@ export default function Auth({ mode: initialMode, onBack, onAuthed }) {
     if (ref) setRefCode(ref);
   }, []);
 
+  function validatePhone(value) {
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 10;
+  }
+
   async function handleRegister(e) {
     e.preventDefault();
     setError('');
+
+    if (!validatePhone(phone)) {
+      setError('El teléfono debe tener 10 dígitos.');
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. Crear usuario en Supabase Auth
+      const internalEmail = phoneToInternalEmail(phone);
+
+      // 1. Crear usuario en Supabase Auth (usando el email invisible)
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: internalEmail,
         password,
       });
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        if (signUpError.message.toLowerCase().includes('already registered')) {
+          throw new Error('Ese número de teléfono ya está registrado.');
+        }
+        throw signUpError;
+      }
 
       const userId = authData.user?.id;
       if (!userId) throw new Error('No se pudo crear el usuario.');
@@ -45,12 +69,11 @@ export default function Auth({ mode: initialMode, onBack, onAuthed }) {
         if (refProfile) referredBy = refProfile.id;
       }
 
-      // 3. Crear el perfil
+      // 3. Crear el perfil (guardamos el teléfono real, no el email interno)
       const { error: profileError } = await supabase.from('profiles').insert({
         id: userId,
         full_name: fullName,
-        email,
-        phone,
+        phone: phone.replace(/\D/g, ''),
         referred_by: referredBy,
       });
       if (profileError) throw profileError;
@@ -66,16 +89,23 @@ export default function Auth({ mode: initialMode, onBack, onAuthed }) {
   async function handleLogin(e) {
     e.preventDefault();
     setError('');
+
+    if (!validatePhone(phone)) {
+      setError('El teléfono debe tener 10 dígitos.');
+      return;
+    }
+
     setLoading(true);
     try {
+      const internalEmail = phoneToInternalEmail(phone);
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
-        email,
+        email: internalEmail,
         password,
       });
-      if (loginError) throw loginError;
+      if (loginError) throw new Error('Teléfono o contraseña incorrectos.');
       onAuthed(data.user.id);
     } catch (err) {
-      setError(err.message || 'Correo o contraseña incorrectos.');
+      setError(err.message || 'Teléfono o contraseña incorrectos.');
     } finally {
       setLoading(false);
     }
@@ -104,17 +134,10 @@ export default function Auth({ mode: initialMode, onBack, onAuthed }) {
             />
           )}
           <input
-            type="email" placeholder="Correo electrónico" required
-            value={email} onChange={(e) => setEmail(e.target.value)}
+            type="tel" placeholder="Número de teléfono (10 dígitos)" required
+            value={phone} onChange={(e) => setPhone(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#7C2FE0]"
           />
-          {mode === 'register' && (
-            <input
-              type="tel" placeholder="Teléfono (10 dígitos)" required
-              value={phone} onChange={(e) => setPhone(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#7C2FE0]"
-            />
-          )}
           <input
             type="password" placeholder="Contraseña" required minLength={6}
             value={password} onChange={(e) => setPassword(e.target.value)}
