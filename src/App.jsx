@@ -14,7 +14,8 @@ export default function App() {
   const [view, setView] = useState('landing');
   const [authMode, setAuthMode] = useState('login');
   const [userId, setUserId] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminStatus, setAdminStatus] = useState('checking'); // 'checking' | 'admin' | 'denied' | 'error'
+  const [debugMsg, setDebugMsg] = useState('');
   const [balance, setBalance] = useState(0);
   const [checkingSession, setCheckingSession] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -32,9 +33,17 @@ export default function App() {
   useEffect(() => {
     if (!userId) return;
     supabase.from('profiles').select('available_balance, is_admin').eq('id', userId).single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          setAdminStatus('error');
+          setDebugMsg(error.message);
+          return;
+        }
         setBalance(data?.available_balance || 0);
-        setIsAdmin(!!data?.is_admin);
+        if (isAdminRoute) {
+          setAdminStatus(data?.is_admin ? 'admin' : 'denied');
+          setDebugMsg(`is_admin recibido: ${JSON.stringify(data?.is_admin)} · id consultado: ${userId}`);
+        }
       });
   }, [userId, refreshKey]);
 
@@ -63,14 +72,18 @@ export default function App() {
     if (!userId) {
       return <Auth mode="login" onBack={() => {}} onAuthed={handleAuthed} />;
     }
-    if (!isAdmin) {
-      return (
-        <div className="min-h-screen flex items-center justify-center text-white/50 text-sm px-6 text-center">
-          No tienes acceso a esta sección.
-        </div>
-      );
+    if (adminStatus === 'checking') {
+      return <div className="min-h-screen flex items-center justify-center text-white/50 text-sm">Verificando permisos…</div>;
     }
-    return <Admin onBack={() => window.location.href = '/'} />;
+    if (adminStatus === 'admin') {
+      return <Admin onBack={() => window.location.href = '/'} />;
+    }
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-white/50 text-sm px-6 text-center gap-4">
+        <p>No tienes acceso a esta sección.</p>
+        <p className="text-white/25 text-xs font-mono break-all">{debugMsg}</p>
+      </div>
+    );
   }
 
   // ---- Flujo normal de usuario ----
