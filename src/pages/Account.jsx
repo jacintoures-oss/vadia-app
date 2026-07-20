@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { User, History, KeyRound, LogOut, Check } from 'lucide-react';
+import { User, History, KeyRound, LogOut, Check, LifeBuoy } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
 
@@ -101,6 +101,17 @@ export default function Account({ userId, onLogout, onNavigate }) {
           </p>
         )}
       </div>
+
+      {/* Soporte */}
+      <button
+        onClick={() => onNavigate('support')}
+        className="w-full flex items-center gap-3 card-glow rounded-2xl p-5 bg-[#0F0D14] mt-4"
+      >
+        <div className="w-9 h-9 rounded-full bg-[#2FE0B0]/15 flex items-center justify-center">
+          <LifeBuoy size={16} className="text-[#2FE0B0]" />
+        </div>
+        <span className="text-sm font-semibold">Soporte y ayuda</span>
+      </button>
 
       {/* Historial de movimientos */}
       <div className="mt-6">
