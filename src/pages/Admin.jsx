@@ -461,4 +461,205 @@ export default function Admin({ onBack }) {
             return (
               <div className="space-y-3 mb-5">
                 {prizes.map((prize, i) => {
-                  const prob = prize.is_active &&
+                  const prob = prize.is_active && totalWeight > 0 ? ((prize.weight / totalWeight) * 100).toFixed(1) : '0.0';
+                  return (
+                    <div key={prize.id} className="card-glow rounded-2xl p-4 bg-[#0F0D14]">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          {prize.image_url && (
+                            <img src={prize.image_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          )}
+                          <span className="font-mono text-sm text-[#2FE0B0]">{prob}% de probabilidad</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-1.5 text-[11px] text-white/50">
+                            <input
+                              type="checkbox" checked={prize.is_active}
+                              onChange={(e) => { const c = [...prizes]; c[i].is_active = e.target.checked; setPrizes(c); }}
+                            /> Activo
+                          </label>
+                          <button onClick={() => deletePrize(prize.id)} disabled={busyId === prize.id}>
+                            <Trash2 size={14} className="text-[#E0299B]" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <Field label="Etiqueta">
+                          <input value={prize.label} onChange={(e) => { const c = [...prizes]; c[i].label = e.target.value; setPrizes(c); }}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs" />
+                        </Field>
+                        <Field label="Monto ($)">
+                          <input type="number" value={prize.amount} onChange={(e) => { const c = [...prizes]; c[i].amount = Number(e.target.value); setPrizes(c); }}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                        </Field>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Field label="Peso (probabilidad relativa)">
+                          <input type="number" value={prize.weight} onChange={(e) => { const c = [...prizes]; c[i].weight = Number(e.target.value); setPrizes(c); }}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                        </Field>
+                        <Field label="URL de imagen (opcional)">
+                          <input value={prize.image_url || ''} onChange={(e) => { const c = [...prizes]; c[i].image_url = e.target.value; setPrizes(c); }}
+                            placeholder="https://…"
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs" />
+                        </Field>
+                      </div>
+                      <button
+                        onClick={() => savePrize(prize)}
+                        disabled={busyId === prize.id}
+                        className="w-full bg-white/10 text-xs font-semibold py-2 rounded-lg mt-3"
+                      >
+                        {busyId === prize.id ? 'Guardando…' : 'Guardar cambios'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Agregar premio nuevo */}
+          <form onSubmit={addPrize} className="card-glow rounded-2xl p-4 bg-[#0F0D14] space-y-2">
+            <p className="text-white/50 text-xs mb-1">Agregar premio nuevo</p>
+            <div className="grid grid-cols-2 gap-2">
+              <input placeholder="Etiqueta (ej. $250)" value={newPrize.label}
+                onChange={(e) => setNewPrize({ ...newPrize, label: e.target.value })}
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs" />
+              <input type="number" placeholder="Monto" value={newPrize.amount}
+                onChange={(e) => setNewPrize({ ...newPrize, amount: e.target.value })}
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono" />
+              <input type="number" placeholder="Peso/probabilidad" value={newPrize.weight}
+                onChange={(e) => setNewPrize({ ...newPrize, weight: e.target.value })}
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono" />
+              <input placeholder="URL imagen (opcional)" value={newPrize.image_url}
+                onChange={(e) => setNewPrize({ ...newPrize, image_url: e.target.value })}
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs" />
+            </div>
+            <button
+              type="submit" disabled={busyId === 'newPrize'}
+              className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-2.5 rounded-lg text-sm"
+            >
+              <Plus size={14} /> Agregar premio
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Notificaciones */}
+      {!loading && tab === 'announcements' && (
+        <div>
+          <form onSubmit={sendAnnouncement} className="card-glow rounded-2xl p-5 bg-[#0F0D14] mb-5 space-y-3">
+            <input
+              type="text" placeholder="Título" value={newAnnouncement.title}
+              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm"
+            />
+            <textarea
+              placeholder="Mensaje para todos los usuarios" rows={3} value={newAnnouncement.body}
+              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, body: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm resize-none"
+            />
+            <button
+              type="submit" disabled={busyId === 'announcement'}
+              className="w-full bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-2.5 rounded-xl text-sm disabled:opacity-50"
+            >
+              Enviar a todos los usuarios
+            </button>
+          </form>
+
+          <div className="space-y-2">
+            {announcements.map((a) => (
+              <div key={a.id} className="bg-[#0F0D14] border border-white/10 rounded-xl px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-semibold">{a.title}</p>
+                  <button
+                    onClick={() => toggleAnnouncement(a)}
+                    disabled={busyId === a.id}
+                    className={`text-[10px] px-2 py-0.5 rounded-full ${a.is_active ? 'bg-[#2FE0B0]/15 text-[#2FE0B0]' : 'bg-white/10 text-white/40'}`}
+                  >
+                    {a.is_active ? 'Activo' : 'Oculto'}
+                  </button>
+                </div>
+                <p className="text-white/50 text-xs">{a.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bitácora */}
+      {!loading && tab === 'logs' && (
+        <div className="space-y-2">
+          {logs.length === 0 && <p className="text-white/40 text-sm">Sin actividad registrada.</p>}
+          {logs.map((log) => (
+            <div key={log.id} className="bg-[#0F0D14] border border-white/10 rounded-xl px-4 py-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-mono text-[#E0299B]">{log.action}</span>
+                <span className="text-white/30 text-[11px]">{new Date(log.created_at).toLocaleString('es-MX')}</span>
+              </div>
+              <p className="text-white/40 text-xs">{log.profiles?.full_name || 'Admin'} · {log.target_type} {log.target_id?.slice(0, 8)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Configuración */}
+      {!loading && tab === 'settings' && settings && (
+        <div className="card-glow rounded-2xl p-5 bg-[#0F0D14] space-y-4">
+          <div>
+            <p className="text-white/50 text-xs mb-2">Comisiones de referidos (%)</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3].map((lvl) => (
+                <Field key={lvl} label={`Nivel ${lvl}`}>
+                  <input
+                    type="number" step="0.01"
+                    value={settings.referral_rates?.[`level${lvl}`] ?? ''}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      referral_rates: { ...settings.referral_rates, [`level${lvl}`]: Number(e.target.value) },
+                    })}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono"
+                  />
+                </Field>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-white/50 text-xs mb-2">Retiro mínimo ($)</p>
+            <input
+              type="number"
+              value={settings.min_withdrawal?.amount ?? ''}
+              onChange={(e) => setSettings({ ...settings, min_withdrawal: { amount: Number(e.target.value) } })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono"
+            />
+          </div>
+          <button
+            onClick={saveSettings}
+            disabled={busyId === 'settings'}
+            className="w-full bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-3 rounded-xl"
+          >
+            {busyId === 'settings' ? 'Guardando…' : 'Guardar configuración'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ label, value, accent }) {
+  return (
+    <div className="card-glow rounded-2xl p-4 bg-[#0F0D14]">
+      <p className="text-white/40 text-[11px] mb-1">{label}</p>
+      <p className="font-mono text-lg font-700" style={accent ? { color: accent } : {}}>{value}</p>
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div>
+      <p className="text-white/30 text-[10px] mb-1">{label}</p>
+      {children}
+    </div>
+  );
+}
