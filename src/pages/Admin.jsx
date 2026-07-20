@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const TABS = [
@@ -8,6 +8,8 @@ const TABS = [
   { key: 'users', label: 'Usuarios', icon: Users },
   { key: 'history', label: 'Historial', icon: History },
   { key: 'packages', label: 'Paquetes', icon: Package },
+  { key: 'announcements', label: 'Notificaciones', icon: Megaphone },
+  { key: 'logs', label: 'Bitácora', icon: ScrollText },
   { key: 'settings', label: 'Config', icon: Settings },
 ];
 
@@ -21,6 +23,11 @@ export default function Admin({ onBack }) {
   const [history, setHistory] = useState([]);
   const [packages, setPackages] = useState([]);
   const [settings, setSettings] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '' });
+  const [logs, setLogs] = useState([]);
+  const [editUserId, setEditUserId] = useState(null);
+  const [editName, setEditName] = useState('');
 
   const [busyId, setBusyId] = useState(null);
   const [adjustUserId, setAdjustUserId] = useState(null);
@@ -37,6 +44,8 @@ export default function Admin({ onBack }) {
     if (tab === 'users') await loadUsers();
     if (tab === 'history') await loadHistory();
     if (tab === 'packages') await loadPackages();
+    if (tab === 'announcements') await loadAnnouncements();
+    if (tab === 'logs') await loadLogs();
     if (tab === 'settings') await loadSettings();
     setLoading(false);
   }
@@ -85,6 +94,20 @@ export default function Admin({ onBack }) {
     setPackages(data || []);
   }
 
+  async function loadAnnouncements() {
+    const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
+    setAnnouncements(data || []);
+  }
+
+  async function loadLogs() {
+    const { data } = await supabase
+      .from('admin_logs')
+      .select('*, profiles(full_name, phone)')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    setLogs(data || []);
+  }
+
   async function loadSettings() {
     const { data } = await supabase.from('settings').select('*');
     const map = {};
@@ -124,6 +147,38 @@ export default function Admin({ onBack }) {
     await supabase.rpc('admin_adjust_balance', { p_user_id: userId, p_amount: value, p_note: 'Ajuste manual desde panel admin' });
     setAdjustUserId(null);
     setAdjustAmount('');
+    await loadUsers();
+    setBusyId(null);
+  }
+
+  async function sendAnnouncement(e) {
+    e.preventDefault();
+    if (!newAnnouncement.title.trim() || !newAnnouncement.body.trim()) return;
+    setBusyId('announcement');
+    await supabase.from('announcements').insert(newAnnouncement);
+    setNewAnnouncement({ title: '', body: '' });
+    await loadAnnouncements();
+    setBusyId(null);
+  }
+
+  async function toggleAnnouncement(a) {
+    setBusyId(a.id);
+    await supabase.from('announcements').update({ is_active: !a.is_active }).eq('id', a.id);
+    await loadAnnouncements();
+    setBusyId(null);
+  }
+
+  async function saveUserEdit(userId) {
+    setBusyId(userId);
+    await supabase.rpc('admin_update_user', { p_user_id: userId, p_full_name: editName, p_is_banned: null });
+    setEditUserId(null);
+    await loadUsers();
+    setBusyId(null);
+  }
+
+  async function toggleBan(u) {
+    setBusyId(u.id);
+    await supabase.rpc('admin_update_user', { p_user_id: u.id, p_full_name: null, p_is_banned: !u.is_banned });
     await loadUsers();
     setBusyId(null);
   }
@@ -209,10 +264,21 @@ export default function Admin({ onBack }) {
         <div className="space-y-2">
           {users.length === 0 && <p className="text-white/40 text-sm">No hay usuarios todavía.</p>}
           {users.map((u) => (
-            <div key={u.id} className="bg-[#0F0D14] border border-white/10 rounded-xl px-4 py-3">
+            <div key={u.id} className={`bg-[#0F0D14] border rounded-xl px-4 py-3 ${u.is_banned ? 'border-[#E0299B]/40' : 'border-white/10'}`}>
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm">{u.full_name || 'Sin nombre'} {u.is_admin && <span className="text-[#F5A623] text-[10px] ml-1">ADMIN</span>}</p>
+                <div className="flex-1">
+                  {editUserId === u.id ? (
+                    <input
+                      autoFocus value={editName} onChange={(e) => setEditName(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm w-full mb-1"
+                    />
+                  ) : (
+                    <p className="text-sm">
+                      {u.full_name || 'Sin nombre'}
+                      {u.is_admin && <span className="text-[#F5A623] text-[10px] ml-1">ADMIN</span>}
+                      {u.is_banned && <span className="text-[#E0299B] text-[10px] ml-1">BANEADO</span>}
+                    </p>
+                  )}
                   <p className="text-white/40 text-xs font-mono">{u.phone}</p>
                 </div>
                 <div className="text-right">
@@ -221,8 +287,33 @@ export default function Admin({ onBack }) {
                 </div>
               </div>
 
+              <div className="flex gap-3 mt-2 pt-2 border-t border-white/10">
+                {editUserId === u.id ? (
+                  <>
+                    <button onClick={() => saveUserEdit(u.id)} disabled={busyId === u.id} className="text-[#2FE0B0] text-[11px] font-semibold">Guardar</button>
+                    <button onClick={() => setEditUserId(null)} className="text-white/40 text-[11px]">Cancelar</button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setEditUserId(u.id); setEditName(u.full_name || ''); }}
+                      className="flex items-center gap-1 text-white/40 text-[11px]"
+                    >
+                      <Pencil size={11} /> Editar nombre
+                    </button>
+                    <button
+                      onClick={() => toggleBan(u)}
+                      disabled={busyId === u.id}
+                      className={`flex items-center gap-1 text-[11px] ${u.is_banned ? 'text-[#2FE0B0]' : 'text-[#E0299B]'}`}
+                    >
+                      <Ban size={11} /> {u.is_banned ? 'Quitar ban' : 'Banear'}
+                    </button>
+                  </>
+                )}
+              </div>
+
               {adjustUserId === u.id ? (
-                <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
+                <div className="flex gap-2 mt-2 pt-2 border-t border-white/10">
                   <input
                     type="number" step="0.01" placeholder="+/- monto" autoFocus
                     value={adjustAmount} onChange={(e) => setAdjustAmount(e.target.value)}
@@ -319,63 +410,34 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Configuración */}
-      {!loading && tab === 'settings' && settings && (
-        <div className="card-glow rounded-2xl p-5 bg-[#0F0D14] space-y-4">
-          <div>
-            <p className="text-white/50 text-xs mb-2">Comisiones de referidos (%)</p>
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((lvl) => (
-                <Field key={lvl} label={`Nivel ${lvl}`}>
-                  <input
-                    type="number" step="0.01"
-                    value={settings.referral_rates?.[`level${lvl}`] ?? ''}
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      referral_rates: { ...settings.referral_rates, [`level${lvl}`]: Number(e.target.value) },
-                    })}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono"
-                  />
-                </Field>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-white/50 text-xs mb-2">Retiro mínimo ($)</p>
+      {/* Notificaciones */}
+      {!loading && tab === 'announcements' && (
+        <div>
+          <form onSubmit={sendAnnouncement} className="card-glow rounded-2xl p-5 bg-[#0F0D14] mb-5 space-y-3">
             <input
-              type="number"
-              value={settings.min_withdrawal?.amount ?? ''}
-              onChange={(e) => setSettings({ ...settings, min_withdrawal: { amount: Number(e.target.value) } })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono"
+              type="text" placeholder="Título" value={newAnnouncement.title}
+              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm"
             />
-          </div>
-          <button
-            onClick={saveSettings}
-            disabled={busyId === 'settings'}
-            className="w-full bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-3 rounded-xl"
-          >
-            {busyId === 'settings' ? 'Guardando…' : 'Guardar configuración'}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+            <textarea
+              placeholder="Mensaje para todos los usuarios" rows={3} value={newAnnouncement.body}
+              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, body: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm resize-none"
+            />
+            <button
+              type="submit" disabled={busyId === 'announcement'}
+              className="w-full bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-2.5 rounded-xl text-sm disabled:opacity-50"
+            >
+              Enviar a todos los usuarios
+            </button>
+          </form>
 
-function StatCard({ label, value, accent }) {
-  return (
-    <div className="card-glow rounded-2xl p-4 bg-[#0F0D14]">
-      <p className="text-white/40 text-[11px] mb-1">{label}</p>
-      <p className="font-mono text-lg font-700" style={accent ? { color: accent } : {}}>{value}</p>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div>
-      <p className="text-white/30 text-[10px] mb-1">{label}</p>
-      {children}
-    </div>
-  );
-      }
+          <div className="space-y-2">
+            {announcements.map((a) => (
+              <div key={a.id} className="bg-[#0F0D14] border border-white/10 rounded-xl px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-semibold">{a.title}</p>
+                  <button
+                    onClick={() => toggleAnnouncement(a)}
+                    disabled={busyId === a.id}
+                    className={`text-[10px] px-2 py-0.5 rounded-full ${a.is_active ? 'bg-[#2FE0B0]/15 text-[#2FE0B0]' : 'bg-white/10 text-whi
