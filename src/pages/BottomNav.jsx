@@ -1,9 +1,10 @@
-import { Home, Users, Building2 } from 'lucide-react';
+import { Home, Users, User, Building2 } from 'lucide-react';
 
 export default function BottomNav({ current, onNavigate }) {
   const items = [
     { key: 'dashboard', label: 'Inicio', icon: Home },
     { key: 'referrals', label: 'Referidos', icon: Users },
+    { key: 'account', label: 'Cuenta', icon: User },
     { key: 'company', label: 'Empresa', icon: Building2 },
   ];
 
