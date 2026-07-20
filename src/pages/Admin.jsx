@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const TABS = [
@@ -8,6 +8,7 @@ const TABS = [
   { key: 'users', label: 'Usuarios', icon: Users },
   { key: 'history', label: 'Historial', icon: History },
   { key: 'packages', label: 'Paquetes', icon: Package },
+  { key: 'roulette', label: 'Ruleta', icon: Disc3 },
   { key: 'announcements', label: 'Notificaciones', icon: Megaphone },
   { key: 'logs', label: 'Bitácora', icon: ScrollText },
   { key: 'settings', label: 'Config', icon: Settings },
@@ -28,6 +29,8 @@ export default function Admin({ onBack }) {
   const [logs, setLogs] = useState([]);
   const [editUserId, setEditUserId] = useState(null);
   const [editName, setEditName] = useState('');
+  const [prizes, setPrizes] = useState([]);
+  const [newPrize, setNewPrize] = useState({ label: '', amount: '', weight: '', image_url: '' });
 
   const [busyId, setBusyId] = useState(null);
   const [adjustUserId, setAdjustUserId] = useState(null);
@@ -44,6 +47,7 @@ export default function Admin({ onBack }) {
     if (tab === 'users') await loadUsers();
     if (tab === 'history') await loadHistory();
     if (tab === 'packages') await loadPackages();
+    if (tab === 'roulette') await loadPrizes();
     if (tab === 'announcements') await loadAnnouncements();
     if (tab === 'logs') await loadLogs();
     if (tab === 'settings') await loadSettings();
@@ -97,6 +101,11 @@ export default function Admin({ onBack }) {
   async function loadAnnouncements() {
     const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
     setAnnouncements(data || []);
+  }
+
+  async function loadPrizes() {
+    const { data } = await supabase.from('roulette_prizes').select('*').order('amount');
+    setPrizes(data || []);
   }
 
   async function loadLogs() {
@@ -180,6 +189,40 @@ export default function Admin({ onBack }) {
     setBusyId(u.id);
     await supabase.rpc('admin_update_user', { p_user_id: u.id, p_full_name: null, p_is_banned: !u.is_banned });
     await loadUsers();
+    setBusyId(null);
+  }
+
+  async function savePrize(prize) {
+    setBusyId(prize.id);
+    await supabase.from('roulette_prizes').update({
+      label: prize.label,
+      amount: prize.amount,
+      weight: prize.weight,
+      image_url: prize.image_url || null,
+      is_active: prize.is_active,
+    }).eq('id', prize.id);
+    setBusyId(null);
+  }
+
+  async function deletePrize(id) {
+    setBusyId(id);
+    await supabase.from('roulette_prizes').delete().eq('id', id);
+    await loadPrizes();
+    setBusyId(null);
+  }
+
+  async function addPrize(e) {
+    e.preventDefault();
+    if (!newPrize.label || newPrize.amount === '' || newPrize.weight === '') return;
+    setBusyId('newPrize');
+    await supabase.from('roulette_prizes').insert({
+      label: newPrize.label,
+      amount: Number(newPrize.amount),
+      weight: Number(newPrize.weight),
+      image_url: newPrize.image_url || null,
+    });
+    setNewPrize({ label: '', amount: '', weight: '', image_url: '' });
+    await loadPrizes();
     setBusyId(null);
   }
 
@@ -410,34 +453,12 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Notificaciones */}
-      {!loading && tab === 'announcements' && (
+      {/* Ruleta */}
+      {!loading && tab === 'roulette' && (
         <div>
-          <form onSubmit={sendAnnouncement} className="card-glow rounded-2xl p-5 bg-[#0F0D14] mb-5 space-y-3">
-            <input
-              type="text" placeholder="Título" value={newAnnouncement.title}
-              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm"
-            />
-            <textarea
-              placeholder="Mensaje para todos los usuarios" rows={3} value={newAnnouncement.body}
-              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, body: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm resize-none"
-            />
-            <button
-              type="submit" disabled={busyId === 'announcement'}
-              className="w-full bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-2.5 rounded-xl text-sm disabled:opacity-50"
-            >
-              Enviar a todos los usuarios
-            </button>
-          </form>
-
-          <div className="space-y-2">
-            {announcements.map((a) => (
-              <div key={a.id} className="bg-[#0F0D14] border border-white/10 rounded-xl px-4 py-3">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-semibold">{a.title}</p>
-                  <button
-                    onClick={() => toggleAnnouncement(a)}
-                    disabled={busyId === a.id}
-                    className={`text-[10px] px-2 py-0.5 rounded-full ${a.is_active ? 'bg-[#2FE0B0]/15 text-[#2FE0B0]' : 'bg-white/10 text-whi
+          {(() => {
+            const totalWeight = prizes.filter(p => p.is_active).reduce((s, p) => s + Number(p.weight), 0);
+            return (
+              <div className="space-y-3 mb-5">
+                {prizes.map((prize, i) => {
+                  const prob = prize.is_active &&
