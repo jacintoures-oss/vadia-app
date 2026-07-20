@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { LogOut, Play, Wallet, ArrowDownToLine } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import BottomNav from './BottomNav';
 
 export default function Dashboard({ userId, onLogout, onNavigate }) {
   const [profile, setProfile] = useState(null);
@@ -50,7 +51,7 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
     : 0;
 
   return (
-    <div className="min-h-screen px-6 py-8">
+    <div className="min-h-screen px-6 py-8 pb-28">
       <div className="flex items-center justify-between mb-10">
         <span className="font-display font-800 text-xl">vadia</span>
         <button onClick={handleLogout} className="flex items-center gap-1.5 text-white/50 text-sm">
@@ -108,11 +109,7 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
         </div>
       )}
 
-      {/* Código de referido */}
-      <div className="card-glow rounded-2xl p-6 bg-[#0F0D14] mt-4">
-        <p className="text-white/50 text-xs mb-1">Tu código de referido</p>
-        <p className="font-mono text-lg text-[#2FE0B0]">{profile?.referral_code}</p>
-      </div>
+      <BottomNav current="dashboard" onNavigate={onNavigate} />
     </div>
   );
 }
