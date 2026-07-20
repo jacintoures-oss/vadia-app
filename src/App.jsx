@@ -6,6 +6,8 @@ import BuyPackage from './pages/BuyPackage';
 import WatchVideo from './pages/WatchVideo';
 import Withdraw from './pages/Withdraw';
 import Admin from './pages/Admin';
+import Referrals from './pages/Referrals';
+import Company from './pages/Company';
 import { supabase } from './lib/supabaseClient';
 
 const isAdminRoute = window.location.pathname.startsWith('/admin');
@@ -91,6 +93,8 @@ export default function App() {
     if (view === 'buy') return <BuyPackage userId={userId} onBack={goDashboard} onRequested={goDashboard} />;
     if (view === 'watch') return <WatchVideo onBack={goDashboard} onDone={goDashboard} />;
     if (view === 'withdraw') return <Withdraw balance={balance} onBack={goDashboard} onDone={goDashboard} />;
+    if (view === 'referrals') return <Referrals userId={userId} onNavigate={setView} />;
+    if (view === 'company') return <Company onNavigate={setView} />;
     return <Dashboard key={refreshKey} userId={userId} onLogout={handleLogout} onNavigate={setView} />;
   }
 
