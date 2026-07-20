@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogOut, Play, Wallet, ArrowDownToLine } from 'lucide-react';
+import { LogOut, Play, Wallet, ArrowDownToLine, Bell, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
 
@@ -54,8 +54,8 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
     <div className="min-h-screen px-6 py-8 pb-28">
       <div className="flex items-center justify-between mb-10">
         <span className="font-display font-800 text-xl">vadia</span>
-        <button onClick={handleLogout} className="flex items-center gap-1.5 text-white/50 text-sm">
-          <LogOut size={15} /> Salir
+        <button onClick={() => onNavigate('notifications')} className="text-white/50">
+          <Bell size={19} />
         </button>
       </div>
 
@@ -108,6 +108,23 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
           </button>
         </div>
       )}
+
+      {/* Ruleta diaria */}
+      <button
+        onClick={() => onNavigate('roulette')}
+        className="w-full flex items-center justify-between card-glow rounded-2xl p-5 bg-[#0F0D14] mt-4"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#F5A623]/15 flex items-center justify-center">
+            <Sparkles size={18} className="text-[#F5A623]" />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-semibold">Ruleta diaria</p>
+            <p className="text-white/40 text-xs">Gira gratis una vez al día</p>
+          </div>
+        </div>
+        <span className="text-white/30">→</span>
+      </button>
 
       <BottomNav current="dashboard" onNavigate={onNavigate} />
     </div>
