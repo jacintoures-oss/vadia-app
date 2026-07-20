@@ -9,6 +9,10 @@ import Admin from './pages/Admin';
 import Referrals from './pages/Referrals';
 import Account from './pages/Account';
 import Company from './pages/Company';
+import Roulette from './pages/Roulette';
+import Notifications from './pages/Notifications';
+import Support from './pages/Support';
+import Onboarding from './pages/Onboarding';
 import { supabase } from './lib/supabaseClient';
 
 const isAdminRoute = window.location.pathname.startsWith('/admin');
@@ -20,6 +24,8 @@ export default function App() {
   const [adminStatus, setAdminStatus] = useState('checking'); // 'checking' | 'admin' | 'denied' | 'error'
   const [debugMsg, setDebugMsg] = useState('');
   const [balance, setBalance] = useState(0);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -35,7 +41,7 @@ export default function App() {
 
   useEffect(() => {
     if (!userId) return;
-    supabase.from('profiles').select('available_balance, is_admin').eq('id', userId).single()
+    supabase.from('profiles').select('available_balance, is_admin, has_seen_onboarding, is_banned').eq('id', userId).single()
       .then(({ data, error }) => {
         if (error) {
           setAdminStatus('error');
@@ -43,6 +49,8 @@ export default function App() {
           return;
         }
         setBalance(data?.available_balance || 0);
+        setNeedsOnboarding(!data?.has_seen_onboarding);
+        setIsBanned(!!data?.is_banned);
         if (isAdminRoute) {
           setAdminStatus(data?.is_admin ? 'admin' : 'denied');
           setDebugMsg(`is_admin recibido: ${JSON.stringify(data?.is_admin)} · id consultado: ${userId}`);
@@ -57,7 +65,6 @@ export default function App() {
 
   function handleLogout() {
     setUserId(null);
-    setIsAdmin(false);
     setView('landing');
   }
 
@@ -89,6 +96,22 @@ export default function App() {
     );
   }
 
+  // ---- Usuario baneado: bloquear cualquier acceso ----
+  if (userId && isBanned) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 gap-3">
+        <p className="text-[#E0299B] font-display font-700 text-lg">Cuenta suspendida</p>
+        <p className="text-white/40 text-sm max-w-xs">Tu cuenta fue suspendida. Contacta a soporte si crees que esto es un error.</p>
+        <button onClick={handleLogout} className="text-white/40 text-sm mt-4 underline">Cerrar sesión</button>
+      </div>
+    );
+  }
+
+  // ---- Onboarding: se muestra una sola vez tras registrarse ----
+  if (userId && needsOnboarding && view !== 'watch') {
+    return <Onboarding userId={userId} onFinish={() => setNeedsOnboarding(false)} />;
+  }
+
   // ---- Flujo normal de usuario ----
   if (userId) {
     if (view === 'buy') return <BuyPackage userId={userId} onBack={goDashboard} onRequested={goDashboard} />;
@@ -97,6 +120,9 @@ export default function App() {
     if (view === 'referrals') return <Referrals userId={userId} onNavigate={setView} />;
     if (view === 'account') return <Account userId={userId} onLogout={handleLogout} onNavigate={setView} />;
     if (view === 'company') return <Company onNavigate={setView} />;
+    if (view === 'roulette') return <Roulette onBack={goDashboard} onDone={goDashboard} />;
+    if (view === 'notifications') return <Notifications onBack={goDashboard} />;
+    if (view === 'support') return <Support userId={userId} onBack={() => setView('account')} />;
     return <Dashboard key={refreshKey} userId={userId} onLogout={handleLogout} onNavigate={setView} />;
   }
 
