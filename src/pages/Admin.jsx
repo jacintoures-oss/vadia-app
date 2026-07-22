@@ -503,10 +503,10 @@ export default function Admin({ onBack }) {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           {prize.image_url ? (
-                            <img src={prize.image_url} alt="" className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                            <img src={prize.image_url} alt="" className="w-14 h-14 rounded-full object-cover border border-white/10" />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                              <ImagePlus size={14} className="text-white/20" />
+                            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center">
+                              <ImagePlus size={16} className="text-white/20" />
                             </div>
                           )}
                           <span className="font-mono text-sm text-[#2FE0B0]">{prob}% de probabilidad</span>
