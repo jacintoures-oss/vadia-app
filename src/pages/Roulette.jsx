@@ -118,13 +118,13 @@ export default function Roulette({ onBack, onDone }) {
               return (
                 <div
                   key={p.id}
-                  className="absolute top-1/2 left-1/2 flex flex-col items-center gap-0.5 text-white"
-                  style={{ transform: `rotate(${mid}deg) translate(0, -78px) rotate(${-mid}deg)`, marginLeft: '-24px', marginTop: '-20px', width: 48 }}
+                  className="absolute top-1/2 left-1/2 flex flex-col items-center gap-1 text-white"
+                  style={{ transform: `rotate(${mid}deg) translate(0, -74px) rotate(${-mid}deg)`, marginLeft: '-28px', marginTop: '-28px', width: 56 }}
                 >
                   {p.image_url ? (
-                    <img src={p.image_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                    <img src={p.image_url} alt="" className="w-11 h-11 rounded-full object-cover border-2 border-white/40 shadow-lg" />
                   ) : (
-                    <Icon size={18} />
+                    <Icon size={20} />
                   )}
                   <span className="text-[11px] font-display font-700 drop-shadow">{p.label}</span>
                 </div>
