@@ -13,6 +13,7 @@ import Roulette from './pages/Roulette';
 import Notifications from './pages/Notifications';
 import Support from './pages/Support';
 import Onboarding from './pages/Onboarding';
+import SettingsPage from './pages/Settings';
 import { supabase } from './lib/supabaseClient';
 
 const isAdminRoute = window.location.pathname.startsWith('/admin');
@@ -124,6 +125,7 @@ export default function App() {
     if (view === 'notifications') return <Notifications onBack={goDashboard} />;
     if (view === 'support') return <Support userId={userId} onBack={() => setView('account')} />;
     if (view === 'onboarding') return <Onboarding userId={userId} onFinish={goDashboard} />;
+    if (view === 'settings') return <SettingsPage userId={userId} onBack={() => setView('account')} onLogout={handleLogout} />;
     return <Dashboard key={refreshKey} userId={userId} onLogout={handleLogout} onNavigate={setView} />;
   }
 
