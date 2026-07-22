@@ -123,6 +123,7 @@ export default function App() {
     if (view === 'roulette') return <Roulette onBack={goDashboard} onDone={goDashboard} />;
     if (view === 'notifications') return <Notifications onBack={goDashboard} />;
     if (view === 'support') return <Support userId={userId} onBack={() => setView('account')} />;
+    if (view === 'onboarding') return <Onboarding userId={userId} onFinish={goDashboard} />;
     return <Dashboard key={refreshKey} userId={userId} onLogout={handleLogout} onNavigate={setView} />;
   }
 
