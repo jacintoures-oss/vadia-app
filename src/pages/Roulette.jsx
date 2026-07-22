@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Star, Gem, Coins, Banknote, Gift } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const PALETTE = ['#7C2FE0', '#E0299B', '#F5A623', '#2FE0B0', '#FFC93C', '#4A4458', '#2F6FE0', '#E0592F'];
+
+function iconFor(amount) {
+  if (amount >= 10000) return Gift;
+  if (amount >= 1000) return Gem;
+  if (amount >= 100) return Banknote;
+  return Coins;
+}
 
 export default function Roulette({ onBack, onDone }) {
   const [prizes, setPrizes] = useState([]);
@@ -15,6 +22,17 @@ export default function Roulette({ onBack, onDone }) {
     supabase.from('roulette_prizes').select('*').eq('is_active', true).order('amount')
       .then(({ data }) => setPrizes(data || []));
   }, []);
+
+  const n = prizes.length || 1;
+  const segAngle = 360 / n;
+
+  const gradient = useMemo(
+    () => prizes.map((_, i) => `${PALETTE[i % PALETTE.length]} ${i * segAngle}deg ${(i + 1) * segAngle}deg`).join(','),
+    [prizes, segAngle]
+  );
+
+  // Puntitos de luz alrededor del aro dorado
+  const lights = Array.from({ length: 20 });
 
   async function spin() {
     if (spinning) return;
@@ -41,49 +59,108 @@ export default function Roulette({ onBack, onDone }) {
     }
   }
 
-  const n = prizes.length || 1;
-  const segAngle = 360 / n;
-  const gradient = prizes
-    .map((_, i) => `${PALETTE[i % PALETTE.length]} ${i * segAngle}deg ${(i + 1) * segAngle}deg`)
-    .join(',');
-
   return (
-    <div className="min-h-screen px-6 py-8 flex flex-col">
-      <button onClick={onBack} className="flex items-center gap-2 text-white/50 text-sm mb-6 w-fit">
+    <div className="min-h-screen px-6 py-8 flex flex-col relative overflow-hidden">
+      {/* Confeti decorativo */}
+      <div className="pointer-events-none absolute inset-0 opacity-40 text-lg leading-none">
+        <span className="absolute top-10 left-8">🎉</span>
+        <span className="absolute top-24 right-10">✨</span>
+        <span className="absolute top-64 left-4">💎</span>
+        <span className="absolute top-96 right-6">⭐</span>
+      </div>
+
+      <button onClick={onBack} className="flex items-center gap-2 text-white/50 text-sm mb-4 w-fit relative z-10">
         <ArrowLeft size={16} /> Volver
       </button>
 
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <h1 className="font-display font-700 text-2xl mb-1">Ruleta diaria</h1>
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10">
+        {/* Título con estrellas */}
+        <div className="flex items-center gap-1 mb-1 text-[#FFC93C]">
+          <Star size={12} fill="currentColor" />
+          <Star size={16} fill="currentColor" />
+          <Star size={20} fill="currentColor" />
+          <Star size={16} fill="currentColor" />
+          <Star size={12} fill="currentColor" />
+        </div>
+        <h1 className="font-display font-800 text-3xl text-center leading-none mb-1">
+          RULETA <span className="gradient-text">DIARIA</span>
+        </h1>
         <p className="text-white/40 text-sm mb-8">Un giro gratis cada día</p>
 
-        <div className="relative w-64 h-64 mb-6">
-          <div
-            className="w-full h-full rounded-full border-4 border-white/10 transition-transform duration-[3200ms] ease-out"
-            style={{ transform: `rotate(${rotation}deg)`, background: prizes.length ? `conic-gradient(${gradient})` : '#1a1720' }}
-          />
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[16px] border-t-white" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-14 h-14 rounded-full bg-[#07060A] border-2 border-white/20" />
+        {/* Rueda */}
+        <div className="relative w-72 h-72 mb-6">
+          {/* Aro dorado con luces */}
+          <div className="absolute -inset-3 rounded-full" style={{
+            background: 'conic-gradient(from 0deg, #FFC93C, #F5A623, #FFC93C, #F5A623, #FFC93C)',
+            boxShadow: '0 0 30px rgba(245,166,35,0.5)',
+          }}>
+            {lights.map((_, i) => (
+              <span
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full bg-white"
+                style={{
+                  top: '50%', left: '50%',
+                  transform: `rotate(${(360 / lights.length) * i}deg) translate(0, -140px)`,
+                  boxShadow: '0 0 6px 1px rgba(255,255,255,0.8)',
+                }}
+              />
+            ))}
           </div>
+
+          {/* Disco de premios */}
+          <div
+            className="absolute inset-3 rounded-full border-4 border-black/30 transition-transform duration-[3200ms] ease-out overflow-hidden"
+            style={{ transform: `rotate(${rotation}deg)`, background: prizes.length ? `conic-gradient(${gradient})` : '#1a1720' }}
+          >
+            {prizes.map((p, i) => {
+              const mid = i * segAngle + segAngle / 2;
+              const Icon = iconFor(p.amount);
+              return (
+                <div
+                  key={p.id}
+                  className="absolute top-1/2 left-1/2 flex flex-col items-center gap-0.5 text-white"
+                  style={{ transform: `rotate(${mid}deg) translate(0, -78px) rotate(${-mid}deg)`, marginLeft: '-24px', marginTop: '-20px', width: 48 }}
+                >
+                  {p.image_url ? (
+                    <img src={p.image_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <Icon size={18} />
+                  )}
+                  <span className="text-[11px] font-display font-700 drop-shadow">{p.label}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Puntero */}
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 w-0 h-0 border-l-[11px] border-l-transparent border-r-[11px] border-r-transparent border-t-[18px] border-t-white drop-shadow" />
+
+          {/* Centro / botón de girar */}
+          <button
+            onClick={spin}
+            disabled={spinning || prizes.length === 0}
+            className="absolute inset-0 m-auto w-20 h-20 rounded-full flex items-center justify-center font-display font-800 text-sm text-black disabled:opacity-60"
+            style={{
+              background: 'radial-gradient(circle at 35% 30%, #FFE9A8, #F5A623 60%, #C9820F 100%)',
+              boxShadow: '0 0 0 4px #07060A, 0 0 18px rgba(245,166,35,0.6)',
+            }}
+          >
+            {spinning ? '...' : 'GIRAR'}
+          </button>
         </div>
 
         {/* Lista de premios posibles */}
         <div className="flex flex-wrap justify-center gap-2 mb-6 max-w-xs">
           {prizes.map((p, i) => (
             <div key={p.id} className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full pl-1 pr-2.5 py-1">
-              {p.image_url ? (
-                <img src={p.image_url} alt="" className="w-5 h-5 rounded-full object-cover" />
-              ) : (
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: PALETTE[i % PALETTE.length] }} />
-              )}
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: PALETTE[i % PALETTE.length] }} />
               <span className="text-[11px] font-mono text-white/60">{p.label}</span>
             </div>
           ))}
         </div>
 
         {result && (
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             {result.amount > 0 ? (
               <p className="font-mono text-2xl text-[#2FE0B0]">¡Ganaste ${Number(result.amount).toLocaleString('es-MX')}!</p>
             ) : (
@@ -97,9 +174,12 @@ export default function Roulette({ onBack, onDone }) {
         <button
           onClick={spin}
           disabled={spinning || prizes.length === 0}
-          className="bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold px-10 py-3.5 rounded-full disabled:opacity-50"
+          className="w-full max-w-xs flex flex-col items-center justify-center gap-0.5 bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-3.5 rounded-full disabled:opacity-50"
         >
-          {spinning ? 'Girando…' : 'Girar'}
+          <span>{spinning ? 'Girando…' : 'GIRAR'}</span>
+          <span className="text-[11px] font-normal opacity-80 flex items-center gap-1">
+            <Star size={10} fill="currentColor" /> 1 giro gratis cada día <Star size={10} fill="currentColor" />
+          </span>
         </button>
 
         {result && (
