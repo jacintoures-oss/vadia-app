@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
-import { LogOut, Play, Wallet, ArrowDownToLine, Bell, Sparkles } from 'lucide-react';
+import {
+  Wallet, ArrowDownToLine, ArrowUpToLine, Disc3, BookOpen,
+  Play, Users, Building2, LifeBuoy,
+} from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
+
+const TILES = [
+  { key: 'buy', label: 'Recarga', icon: ArrowUpToLine, color: '#2FE0B0' },
+  { key: 'withdraw', label: 'Retiro', icon: ArrowDownToLine, color: '#F5A623' },
+  { key: 'roulette', label: 'Ruleta Vadia', icon: Disc3, color: '#E0299B' },
+  { key: 'onboarding', label: 'Tutorial', icon: BookOpen, color: '#7C2FE0' },
+  { key: 'watch', label: 'Ver videos', icon: Play, color: '#2F6FE0' },
+  { key: 'referrals', label: 'Referidos', icon: Users, color: '#FFC93C' },
+  { key: 'company', label: 'Empresa', icon: Building2, color: '#E0592F' },
+  { key: 'support', label: 'Soporte', icon: LifeBuoy, color: '#2FE0B0' },
+];
 
 export default function Dashboard({ userId, onLogout, onNavigate }) {
   const [profile, setProfile] = useState(null);
@@ -33,11 +47,6 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
     setLoading(false);
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    onLogout();
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white/50">
@@ -52,14 +61,9 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
 
   return (
     <div className="min-h-screen px-6 py-8 pb-28">
-      <div className="flex items-center justify-between mb-10">
-        <span className="font-display font-800 text-xl">vadia</span>
-        <button onClick={() => onNavigate('notifications')} className="text-white/50">
-          <Bell size={19} />
-        </button>
-      </div>
+      <span className="font-display font-800 text-xl">vadia</span>
 
-      <p className="text-white/50 text-sm">Hola, {profile?.full_name?.split(' ')[0] || 'de nuevo'}</p>
+      <p className="text-white/50 text-sm mt-4">Hola, {profile?.full_name?.split(' ')[0] || 'de nuevo'}</p>
 
       {/* Saldo */}
       <div className="card-glow rounded-2xl p-6 bg-[#0F0D14] mt-3">
@@ -69,62 +73,27 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
         <p className="font-mono text-4xl font-700">
           ${Number(profile?.available_balance || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
         </p>
-        <button
-          onClick={() => onNavigate('withdraw')}
-          className="flex items-center gap-1.5 text-[#2FE0B0] text-sm font-semibold mt-4"
-        >
-          <ArrowDownToLine size={15} /> Retirar
-        </button>
+        {activePackage && (
+          <p className="text-white/40 text-xs mt-3">
+            {activePackage.packages.name} · {videosLeft} de {activePackage.packages.videos_per_day} videos hoy
+          </p>
+        )}
       </div>
 
-      {/* Paquete activo */}
-      {activePackage ? (
-        <div className="card-glow rounded-2xl p-6 bg-[#0F0D14] mt-4">
-          <p className="text-white/50 text-xs mb-1">Paquete activo</p>
-          <h2 className="font-display font-700 text-lg mb-4">{activePackage.packages.name}</h2>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-mono text-2xl font-700">{videosLeft}</p>
-              <p className="text-white/40 text-xs">videos restantes hoy</p>
-            </div>
-            <button
-              onClick={() => onNavigate('watch')}
-              disabled={videosLeft <= 0}
-              className="flex items-center gap-2 bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold px-6 py-3 rounded-full disabled:opacity-30"
+      {/* Rejilla de accesos rápidos */}
+      <div className="grid grid-cols-4 gap-x-2 gap-y-5 mt-7">
+        {TILES.map(({ key, label, icon: Icon, color }) => (
+          <button key={key} onClick={() => onNavigate(key)} className="flex flex-col items-center gap-2">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style={{ background: `${color}22` }}
             >
-              <Play size={16} fill="currentColor" /> Ver video
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="card-glow rounded-2xl p-6 bg-[#0F0D14] mt-4 text-center">
-          <p className="text-white/60 text-sm mb-4">No tienes un paquete activo todavía.</p>
-          <button
-            onClick={() => onNavigate('buy')}
-            className="bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold px-6 py-3 rounded-full"
-          >
-            Comprar paquete
+              <Icon size={22} style={{ color }} />
+            </div>
+            <span className="text-[11px] text-white/60 text-center leading-tight">{label}</span>
           </button>
-        </div>
-      )}
-
-      {/* Ruleta diaria */}
-      <button
-        onClick={() => onNavigate('roulette')}
-        className="w-full flex items-center justify-between card-glow rounded-2xl p-5 bg-[#0F0D14] mt-4"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#F5A623]/15 flex items-center justify-center">
-            <Sparkles size={18} className="text-[#F5A623]" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold">Ruleta diaria</p>
-            <p className="text-white/40 text-xs">Gira gratis una vez al día</p>
-          </div>
-        </div>
-        <span className="text-white/30">→</span>
-      </button>
+        ))}
+      </div>
 
       <BottomNav current="dashboard" onNavigate={onNavigate} />
     </div>
