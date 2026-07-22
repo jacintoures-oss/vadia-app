@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2, ImagePlus } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const TABS = [
@@ -223,6 +223,42 @@ export default function Admin({ onBack }) {
     });
     setNewPrize({ label: '', amount: '', weight: '', image_url: '' });
     await loadPrizes();
+    setBusyId(null);
+  }
+
+  async function uploadPrizeImage(file, idHint) {
+    const ext = file.name.split('.').pop();
+    const path = `${idHint}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('roulette-images').upload(path, file, { upsert: true });
+    if (uploadError) throw uploadError;
+    const { data } = supabase.storage.from('roulette-images').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function handlePrizeImageUpload(e, prize, i) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusyId(`img-${prize.id}`);
+    try {
+      const url = await uploadPrizeImage(file, prize.id);
+      const copy = [...prizes]; copy[i].image_url = url; setPrizes(copy);
+      await supabase.from('roulette_prizes').update({ image_url: url }).eq('id', prize.id);
+    } catch (err) {
+      alert('No se pudo subir la imagen. Intenta de nuevo.');
+    }
+    setBusyId(null);
+  }
+
+  async function handleNewPrizeImageUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusyId('img-new');
+    try {
+      const url = await uploadPrizeImage(file, 'new');
+      setNewPrize((p) => ({ ...p, image_url: url }));
+    } catch (err) {
+      alert('No se pudo subir la imagen. Intenta de nuevo.');
+    }
     setBusyId(null);
   }
 
@@ -466,8 +502,12 @@ export default function Admin({ onBack }) {
                     <div key={prize.id} className="card-glow rounded-2xl p-4 bg-[#0F0D14]">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          {prize.image_url && (
-                            <img src={prize.image_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          {prize.image_url ? (
+                            <img src={prize.image_url} alt="" className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                              <ImagePlus size={14} className="text-white/20" />
+                            </div>
                           )}
                           <span className="font-mono text-sm text-[#2FE0B0]">{prob}% de probabilidad</span>
                         </div>
@@ -498,10 +538,15 @@ export default function Admin({ onBack }) {
                           <input type="number" value={prize.weight} onChange={(e) => { const c = [...prizes]; c[i].weight = Number(e.target.value); setPrizes(c); }}
                             className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono" />
                         </Field>
-                        <Field label="URL de imagen (opcional)">
-                          <input value={prize.image_url || ''} onChange={(e) => { const c = [...prizes]; c[i].image_url = e.target.value; setPrizes(c); }}
-                            placeholder="https://…"
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs" />
+                        <Field label="Imagen">
+                          <label className="flex items-center justify-center gap-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs cursor-pointer text-white/60">
+                            <ImagePlus size={13} />
+                            {busyId === `img-${prize.id}` ? 'Subiendo…' : (prize.image_url ? 'Cambiar' : 'Subir')}
+                            <input
+                              type="file" accept="image/*" className="hidden"
+                              onChange={(e) => handlePrizeImageUpload(e, prize, i)}
+                            />
+                          </label>
                         </Field>
                       </div>
                       <button
@@ -531,9 +576,11 @@ export default function Admin({ onBack }) {
               <input type="number" placeholder="Peso/probabilidad" value={newPrize.weight}
                 onChange={(e) => setNewPrize({ ...newPrize, weight: e.target.value })}
                 className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono" />
-              <input placeholder="URL imagen (opcional)" value={newPrize.image_url}
-                onChange={(e) => setNewPrize({ ...newPrize, image_url: e.target.value })}
-                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs" />
+              <label className="flex items-center justify-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs cursor-pointer text-white/60">
+                <ImagePlus size={13} />
+                {busyId === 'img-new' ? 'Subiendo…' : (newPrize.image_url ? 'Imagen lista ✓' : 'Subir imagen')}
+                <input type="file" accept="image/*" className="hidden" onChange={handleNewPrizeImageUpload} />
+              </label>
             </div>
             <button
               type="submit" disabled={busyId === 'newPrize'}
