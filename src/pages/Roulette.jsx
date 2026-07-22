@@ -83,16 +83,16 @@ export default function Roulette({ onBack, onDone }) {
           <Star size={12} fill="currentColor" />
         </div>
         <h1 className="font-display font-800 text-3xl text-center leading-none mb-1">
-          RULETA <span className="gradient-text">DIARIA</span>
+          RULETA <span className="gradient-text">VADIA</span>
         </h1>
-        <p className="text-white/40 text-sm mb-8">Un giro gratis cada día</p>
+        <p className="text-white/40 text-sm mb-8">Gira y gana premios reales</p>
 
         {/* Rueda */}
         <div className="relative w-72 h-72 mb-6">
           {/* Aro dorado con luces */}
           <div className="absolute -inset-3 rounded-full" style={{
-            background: 'conic-gradient(from 0deg, #FFC93C, #F5A623, #FFC93C, #F5A623, #FFC93C)',
-            boxShadow: '0 0 30px rgba(245,166,35,0.5)',
+            background: 'conic-gradient(from 0deg, #FFE9A8, #F5A623, #C9820F, #F5A623, #FFE9A8, #C9820F, #F5A623, #FFE9A8)',
+            boxShadow: '0 0 30px rgba(245,166,35,0.55), inset 0 0 14px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.5)',
           }}>
             {lights.map((_, i) => (
               <span
@@ -131,6 +131,18 @@ export default function Roulette({ onBack, onDone }) {
               );
             })}
           </div>
+
+          {/* Brillo y relieve fijo (no gira, simula luz reflejando en la superficie) */}
+          <div
+            className="absolute inset-3 rounded-full pointer-events-none"
+            style={{
+              background: `
+                radial-gradient(circle at 32% 24%, rgba(255,255,255,0.45), rgba(255,255,255,0) 42%),
+                radial-gradient(circle at 68% 78%, rgba(0,0,0,0.4), rgba(0,0,0,0) 55%)
+              `,
+              boxShadow: 'inset 0 0 36px rgba(0,0,0,0.5), inset 0 0 3px rgba(255,255,255,0.4)',
+            }}
+          />
 
           {/* Puntero */}
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 w-0 h-0 border-l-[11px] border-l-transparent border-r-[11px] border-r-transparent border-t-[18px] border-t-white drop-shadow" />
@@ -178,7 +190,7 @@ export default function Roulette({ onBack, onDone }) {
         >
           <span>{spinning ? 'Girando…' : 'GIRAR'}</span>
           <span className="text-[11px] font-normal opacity-80 flex items-center gap-1">
-            <Star size={10} fill="currentColor" /> 1 giro gratis cada día <Star size={10} fill="currentColor" />
+            <Star size={10} fill="currentColor" /> Buena suerte <Star size={10} fill="currentColor" />
           </span>
         </button>
 
