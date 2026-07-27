@@ -1,9 +1,9 @@
 import { Play, Users, Wallet, ShieldCheck } from 'lucide-react';
 
 const PACKAGES = [
-  { name: 'Básico', price: 800, videos: 4, perVideo: 5, color: 'from-[#7C2FE0] to-[#E0299B]' },
-  { name: 'Pro', price: 2400, videos: 10, perVideo: 6, color: 'from-[#E0299B] to-[#F5A623]', featured: true },
-  { name: 'Elite', price: 7200, videos: 20, perVideo: 18, color: 'from-[#F5A623] to-[#FFC93C]' },
+  { name: 'V1', price: 800, videos: 4, perVideo: 5, color: 'from-[#7C2FE0] to-[#E0299B]' },
+  { name: 'V2', price: 2400, videos: 10, perVideo: 6, color: 'from-[#E0299B] to-[#F5A623]', featured: true },
+  { name: 'V3', price: 7200, videos: 20, perVideo: 18, color: 'from-[#F5A623] to-[#FFC93C]' },
 ];
 
 function DialRing({ segments, color }) {
