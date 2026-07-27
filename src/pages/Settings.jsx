@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Plus, Landmark, User, KeyRound, LogOut, ChevronRight, Check, ShieldCheck } from 'lucide-react';
 import { supabase, phoneToInternalEmail } from '../lib/supabaseClient';
 
-export default function SettingsPage({ userId, onBack, onLogout }) {
+export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
   const [profile, setProfile] = useState(null);
   const [editField, setEditField] = useState(null); // 'name' | 'clabe' | 'password' | null
   const [nameInput, setNameInput] = useState('');
   const [clabeInput, setClabeInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
-  const [withdrawalPwInput, setWithdrawalPwInput] = useState('');
-  const [withdrawalPwMsg, setWithdrawalPwMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -88,20 +86,6 @@ export default function SettingsPage({ userId, onBack, onLogout }) {
     setMsg(error ? 'No se pudo cambiar. Intenta de nuevo.' : '¡Contraseña actualizada!');
     setCurrentPasswordInput('');
     setPasswordInput('');
-    setBusy(false);
-    if (!error) setTimeout(() => setEditField(null), 1200);
-  }
-
-  async function saveWithdrawalPassword() {
-    if (withdrawalPwInput.length < 4) {
-      setWithdrawalPwMsg('Mínimo 4 caracteres.');
-      return;
-    }
-    setBusy(true);
-    setWithdrawalPwMsg('');
-    const { error } = await supabase.rpc('set_withdrawal_password', { p_password: withdrawalPwInput });
-    setWithdrawalPwMsg(error ? 'No se pudo guardar. Intenta de nuevo.' : '¡Clave de retiro guardada!');
-    setWithdrawalPwInput('');
     setBusy(false);
     if (!error) setTimeout(() => setEditField(null), 1200);
   }
@@ -195,31 +179,14 @@ export default function SettingsPage({ userId, onBack, onLogout }) {
           </div>
         )}
 
-        {/* Clave de retiro (independiente de la contraseña de sesión) */}
-        <button onClick={() => setEditField(editField === 'withdrawalPw' ? null : 'withdrawalPw')} className="w-full flex items-center gap-3 px-4 py-4">
+        {/* Clave de retiro: pantalla aparte, no desplegable */}
+        <button onClick={() => onNavigate('withdrawal-password')} className="w-full flex items-center gap-3 px-4 py-4">
           <ShieldCheck size={16} className="text-white/40" />
           <span className="text-sm flex-1 text-left">
             Clave de retiro {profile?.withdrawal_password_hash && <span className="text-[#2FE0B0] text-[10px] ml-1">configurada</span>}
           </span>
           <ChevronRight size={16} className="text-white/30" />
         </button>
-        {editField === 'withdrawalPw' && (
-          <div className="px-4 pb-4 space-y-2">
-            <p className="text-white/40 text-[11px]">Se te pedirá cada vez que solicites un retiro, además de tu contraseña de inicio de sesión.</p>
-            <input
-              type="password" value={withdrawalPwInput} onChange={(e) => setWithdrawalPwInput(e.target.value)} placeholder="Nueva clave de retiro"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono"
-            />
-            <button onClick={saveWithdrawalPassword} disabled={busy} className="w-full bg-[#2FE0B0] text-black text-xs font-semibold py-2.5 rounded-lg">
-              {busy ? 'Guardando…' : 'Guardar clave de retiro'}
-            </button>
-            {withdrawalPwMsg && (
-              <p className={`text-xs flex items-center gap-1 ${withdrawalPwMsg.startsWith('¡') ? 'text-[#2FE0B0]' : 'text-[#E0299B]'}`}>
-                {withdrawalPwMsg.startsWith('¡') && <Check size={12} />} {withdrawalPwMsg}
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
       <button
