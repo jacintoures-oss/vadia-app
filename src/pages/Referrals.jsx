@@ -72,7 +72,7 @@ export default function Referrals({ userId, onNavigate }) {
 
   return (
     <div className="min-h-screen px-6 py-8 pb-28">
-      <span className="font-display font-800 text-xl">vadia</span>
+      <img src="/logo.png" alt="Vadia" className="h-9 w-auto" />
 
       <h1 className="font-display font-700 text-2xl mt-6 mb-1">Invita y gana</h1>
       <p className="text-white/50 text-sm mb-6">10% nivel 1 · 3% nivel 2 · 1% nivel 3</p>
