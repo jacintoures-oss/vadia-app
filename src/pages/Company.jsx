@@ -4,7 +4,7 @@ import BottomNav from './BottomNav';
 export default function Company({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 py-8 pb-28">
-      <span className="font-display font-800 text-xl">vadia</span>
+      <img src="/logo.png" alt="Vadia" className="h-9 w-auto" />
 
       <div className="flex flex-col items-center justify-center text-center mt-24">
         <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mb-5">
