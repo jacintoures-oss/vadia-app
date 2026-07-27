@@ -317,6 +317,13 @@ export default function Admin({ onBack }) {
               <p className="text-white/40 text-xs mb-4">
                 {tx.profiles?.phone} {tx.packages?.name ? `· ${tx.packages.name}` : ''}
               </p>
+              {tx.type === 'withdrawal' && tx.bank_account && (
+                <div className="bg-white/5 rounded-lg p-3 mb-4 text-xs space-y-0.5">
+                  <p className="text-white/70">{tx.account_holder}</p>
+                  <p className="text-white/50 font-mono">{tx.bank_account}</p>
+                  <p className="text-white/40">{tx.bank_name}</p>
+                </div>
+              )}
               <div className="flex gap-3">
                 <button
                   onClick={() => resolve(tx.id, 'completed')}
