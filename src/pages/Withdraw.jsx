@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-export default function Withdraw({ balance, onBack, onDone }) {
+export default function Withdraw({ balance, onBack, onDone, onNavigate }) {
   const [amount, setAmount] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
@@ -88,11 +88,20 @@ export default function Withdraw({ balance, onBack, onDone }) {
       </p>
 
       {hasWithdrawalPw === false && (
-        <div className="flex items-start gap-2 bg-[#F5A623]/10 border border-[#F5A623]/30 rounded-xl p-4 mb-6">
+        <div className="flex items-start gap-3 bg-[#F5A623]/10 border border-[#F5A623]/30 rounded-xl p-4 mb-6">
           <ShieldAlert size={16} className="text-[#F5A623] shrink-0 mt-0.5" />
-          <p className="text-[#F5A623] text-xs">
-            Antes de retirar, configura tu clave de retiro en Configuración (Cuenta → engranaje → Clave de retiro).
-          </p>
+          <div className="flex-1">
+            <p className="text-[#F5A623] text-xs mb-2">
+              Antes de retirar, necesitas configurar tu clave de retiro.
+            </p>
+            <button
+              type="button"
+              onClick={() => onNavigate('settings')}
+              className="text-xs font-semibold bg-[#F5A623] text-black px-3 py-1.5 rounded-lg"
+            >
+              Configurar ahora
+            </button>
+          </div>
         </div>
       )}
 
