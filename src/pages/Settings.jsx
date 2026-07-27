@@ -103,9 +103,7 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
         {profile?.avatar_url ? (
           <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover border border-white/10" />
         ) : (
-          <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center font-display font-700 text-2xl text-white/30">
-            {(profile?.full_name || 'V')[0].toUpperCase()}
-          </div>
+          <img src="/default-avatar.png" alt="" className="w-20 h-20 rounded-full object-cover border border-white/10" />
         )}
         <label className="w-20 h-20 rounded-full border-2 border-dashed border-white/15 flex items-center justify-center cursor-pointer text-white/30">
           {uploadingAvatar ? '…' : <Plus size={22} />}
