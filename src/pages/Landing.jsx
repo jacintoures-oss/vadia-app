@@ -39,7 +39,7 @@ export default function Landing({ onGetStarted, onLogin }) {
     <div className="min-h-screen">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
-        <span className="font-display font-800 text-xl tracking-tight">vadia</span>
+        <img src="/logo.png" alt="Vadia" className="h-9 w-auto" />
         <button onClick={onLogin} className="text-sm text-white/70 hover:text-white transition">
           Iniciar sesión
         </button>
