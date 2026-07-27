@@ -117,7 +117,7 @@ export default function App() {
   if (userId) {
     if (view === 'buy') return <BuyPackage userId={userId} onBack={goDashboard} onRequested={goDashboard} />;
     if (view === 'watch') return <WatchVideo onBack={goDashboard} onDone={goDashboard} />;
-    if (view === 'withdraw') return <Withdraw balance={balance} onBack={goDashboard} onDone={goDashboard} />;
+    if (view === 'withdraw') return <Withdraw balance={balance} onBack={goDashboard} onDone={goDashboard} onNavigate={setView} />;
     if (view === 'referrals') return <Referrals userId={userId} onNavigate={setView} />;
     if (view === 'account') return <Account userId={userId} onLogout={handleLogout} onNavigate={setView} />;
     if (view === 'company') return <Company onNavigate={setView} />;
