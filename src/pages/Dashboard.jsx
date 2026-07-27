@@ -61,7 +61,7 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
 
   return (
     <div className="min-h-screen px-6 py-8 pb-28">
-      <span className="font-display font-800 text-xl">vadia</span>
+      <img src="/logo.png" alt="Vadia" className="h-9 w-auto" />
 
       <p className="text-white/50 text-sm mt-4">Hola, {profile?.full_name?.split(' ')[0] || 'de nuevo'}</p>
 
