@@ -96,7 +96,7 @@ export default function Withdraw({ balance, onBack, onDone, onNavigate }) {
             </p>
             <button
               type="button"
-              onClick={() => onNavigate('settings')}
+              onClick={() => onNavigate('withdrawal-password')}
               className="text-xs font-semibold bg-[#F5A623] text-black px-3 py-1.5 rounded-lg"
             >
               Configurar ahora
