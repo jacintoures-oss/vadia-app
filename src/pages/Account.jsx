@@ -70,9 +70,7 @@ export default function Account({ userId, onLogout, onNavigate }) {
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-white/60" />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-white/20 border-2 border-white/60 flex items-center justify-center font-display font-700 text-lg">
-                {(profile?.full_name || 'V')[0].toUpperCase()}
-              </div>
+              <img src="/default-avatar.png" alt="" className="w-14 h-14 rounded-full object-cover border-2 border-white/60" />
             )}
             <div>
               <p className="font-display font-700">{profile?.full_name || 'Usuario Vadia'}</p>
