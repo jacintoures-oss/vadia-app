@@ -15,6 +15,7 @@ import Support from './pages/Support';
 import Onboarding from './pages/Onboarding';
 import SettingsPage from './pages/Settings';
 import WithdrawalPassword from './pages/WithdrawalPassword';
+import Tasks from './pages/Tasks';
 import { supabase } from './lib/supabaseClient';
 
 const isAdminRoute = window.location.pathname.startsWith('/admin');
@@ -128,6 +129,7 @@ export default function App() {
     if (view === 'onboarding') return <Onboarding userId={userId} onFinish={goDashboard} />;
     if (view === 'settings') return <SettingsPage userId={userId} onBack={() => setView('account')} onLogout={handleLogout} onNavigate={setView} />;
     if (view === 'withdrawal-password') return <WithdrawalPassword onBack={() => setView('settings')} />;
+    if (view === 'tasks') return <Tasks onBack={goDashboard} />;
     return <Dashboard key={refreshKey} userId={userId} onLogout={handleLogout} onNavigate={setView} />;
   }
 
