@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2, ImagePlus } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2, ImagePlus, Film } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const TABS = [
@@ -8,6 +8,7 @@ const TABS = [
   { key: 'users', label: 'Usuarios', icon: Users },
   { key: 'history', label: 'Historial', icon: History },
   { key: 'packages', label: 'Paquetes', icon: Package },
+  { key: 'videos', label: 'Videos', icon: Film },
   { key: 'roulette', label: 'Ruleta', icon: Disc3 },
   { key: 'announcements', label: 'Notificaciones', icon: Megaphone },
   { key: 'logs', label: 'Bitácora', icon: ScrollText },
@@ -31,6 +32,8 @@ export default function Admin({ onBack }) {
   const [editName, setEditName] = useState('');
   const [prizes, setPrizes] = useState([]);
   const [newPrize, setNewPrize] = useState({ label: '', amount: '', weight: '', image_url: '' });
+  const [videos, setVideos] = useState([]);
+  const [newVideo, setNewVideo] = useState({ title: '', link: '', duration_seconds: 20 });
 
   const [busyId, setBusyId] = useState(null);
   const [adjustUserId, setAdjustUserId] = useState(null);
@@ -47,6 +50,7 @@ export default function Admin({ onBack }) {
     if (tab === 'users') await loadUsers();
     if (tab === 'history') await loadHistory();
     if (tab === 'packages') await loadPackages();
+    if (tab === 'videos') await loadVideos();
     if (tab === 'roulette') await loadPrizes();
     if (tab === 'announcements') await loadAnnouncements();
     if (tab === 'logs') await loadLogs();
@@ -98,6 +102,11 @@ export default function Admin({ onBack }) {
     setPackages(data || []);
   }
 
+  async function loadVideos() {
+    const { data } = await supabase.from('ad_videos').select('*').order('created_at', { ascending: false });
+    setVideos(data || []);
+  }
+
   async function loadAnnouncements() {
     const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
     setAnnouncements(data || []);
@@ -139,6 +148,49 @@ export default function Admin({ onBack }) {
       price_per_video: pkg.price_per_video,
       is_active: pkg.is_active,
     }).eq('id', pkg.id);
+    setBusyId(null);
+  }
+
+  // Acepta un link completo de YouTube o solo el código, y siempre saca el código
+  function extractYoutubeId(input) {
+    const trimmed = input.trim();
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)([\w-]{11})/,
+    ];
+    for (const p of patterns) {
+      const m = trimmed.match(p);
+      if (m) return m[1];
+    }
+    // Si no coincide con ningún patrón de link, asumimos que ya es el código de 11 caracteres
+    return trimmed;
+  }
+
+  async function addVideo(e) {
+    e.preventDefault();
+    const youtubeId = extractYoutubeId(newVideo.link);
+    if (!newVideo.title || !youtubeId) return;
+    setBusyId('newVideo');
+    await supabase.from('ad_videos').insert({
+      title: newVideo.title,
+      youtube_id: youtubeId,
+      duration_seconds: Number(newVideo.duration_seconds) || 20,
+    });
+    setNewVideo({ title: '', link: '', duration_seconds: 20 });
+    await loadVideos();
+    setBusyId(null);
+  }
+
+  async function toggleVideo(v) {
+    setBusyId(v.id);
+    await supabase.from('ad_videos').update({ is_active: !v.is_active }).eq('id', v.id);
+    await loadVideos();
+    setBusyId(null);
+  }
+
+  async function deleteVideo(id) {
+    setBusyId(id);
+    await supabase.from('ad_videos').delete().eq('id', id);
+    await loadVideos();
     setBusyId(null);
   }
 
@@ -493,6 +545,64 @@ export default function Admin({ onBack }) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Videos */}
+      {!loading && tab === 'videos' && (
+        <div>
+          <form onSubmit={addVideo} className="card-glow rounded-2xl p-4 bg-[#0F0D14] space-y-2 mb-5">
+            <p className="text-white/50 text-xs mb-1">Agregar video (pega el link de YouTube)</p>
+            <input
+              placeholder="Título (ej. Tráiler - Película X)" value={newVideo.title}
+              onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs"
+            />
+            <input
+              placeholder="https://youtube.com/watch?v=..." value={newVideo.link}
+              onChange={(e) => setNewVideo({ ...newVideo, link: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono"
+            />
+            <input
+              type="number" placeholder="Segundos a esperar (ej. 20)" value={newVideo.duration_seconds}
+              onChange={(e) => setNewVideo({ ...newVideo, duration_seconds: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono"
+            />
+            <button
+              type="submit" disabled={busyId === 'newVideo'}
+              className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-2.5 rounded-lg text-sm"
+            >
+              <Plus size={14} /> Agregar video
+            </button>
+          </form>
+
+          <p className="text-white/40 text-xs mb-3">{videos.length} video{videos.length !== 1 ? 's' : ''} en tu catálogo</p>
+
+          <div className="space-y-2">
+            {videos.map((v) => (
+              <div key={v.id} className="flex items-center justify-between bg-[#0F0D14] border border-white/10 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <img
+                    src={`https://img.youtube.com/vi/${v.youtube_id}/default.jpg`}
+                    alt="" className="w-14 h-10 object-cover rounded"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm truncate">{v.title}</p>
+                    <p className="text-white/30 text-[11px] font-mono">{v.duration_seconds}s · {v.youtube_id}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0 ml-2">
+                  <button onClick={() => toggleVideo(v)} disabled={busyId === v.id}
+                    className={`text-[10px] px-2 py-0.5 rounded-full ${v.is_active ? 'bg-[#2FE0B0]/15 text-[#2FE0B0]' : 'bg-white/10 text-white/40'}`}>
+                    {v.is_active ? 'Activo' : 'Oculto'}
+                  </button>
+                  <button onClick={() => deleteVideo(v.id)} disabled={busyId === v.id}>
+                    <Trash2 size={14} className="text-[#E0299B]" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
