@@ -66,6 +66,8 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
 
       <p className="text-white/50 text-sm mt-4">Hola, {profile?.full_name?.split(' ')[0] || 'de nuevo'}</p>
 
+      <img src="/company-banner.jpg" alt="Vadia" className="w-full rounded-2xl mt-4" />
+
       {/* Saldo */}
       <div className="card-glow rounded-2xl p-6 bg-[#0F0D14] mt-3">
         <div className="flex items-center gap-2 text-white/50 text-xs mb-2">
