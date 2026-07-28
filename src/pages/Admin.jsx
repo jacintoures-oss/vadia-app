@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2, ImagePlus, Film } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2, ImagePlus, Film, ListChecks } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const TABS = [
@@ -10,6 +10,7 @@ const TABS = [
   { key: 'packages', label: 'Paquetes', icon: Package },
   { key: 'videos', label: 'Videos', icon: Film },
   { key: 'roulette', label: 'Ruleta', icon: Disc3 },
+  { key: 'milestones', label: 'Metas', icon: ListChecks },
   { key: 'announcements', label: 'Notificaciones', icon: Megaphone },
   { key: 'logs', label: 'Bitácora', icon: ScrollText },
   { key: 'settings', label: 'Config', icon: Settings },
@@ -34,6 +35,7 @@ export default function Admin({ onBack }) {
   const [newPrize, setNewPrize] = useState({ label: '', amount: '', weight: '', image_url: '' });
   const [videos, setVideos] = useState([]);
   const [newVideo, setNewVideo] = useState({ title: '', link: '', duration_seconds: 20 });
+  const [milestones, setMilestones] = useState([]);
 
   const [busyId, setBusyId] = useState(null);
   const [adjustUserId, setAdjustUserId] = useState(null);
@@ -52,6 +54,7 @@ export default function Admin({ onBack }) {
     if (tab === 'packages') await loadPackages();
     if (tab === 'videos') await loadVideos();
     if (tab === 'roulette') await loadPrizes();
+    if (tab === 'milestones') await loadMilestones();
     if (tab === 'announcements') await loadAnnouncements();
     if (tab === 'logs') await loadLogs();
     if (tab === 'settings') await loadSettings();
@@ -105,6 +108,21 @@ export default function Admin({ onBack }) {
   async function loadVideos() {
     const { data } = await supabase.from('ad_videos').select('*').order('created_at', { ascending: false });
     setVideos(data || []);
+  }
+
+  async function loadMilestones() {
+    const { data } = await supabase.from('referral_milestones').select('*').order('stage');
+    setMilestones(data || []);
+  }
+
+  async function saveMilestone(m) {
+    setBusyId(m.id);
+    await supabase.from('referral_milestones').update({
+      required_referrals: m.required_referrals,
+      reward_amount: m.reward_amount,
+      is_active: m.is_active,
+    }).eq('id', m.id);
+    setBusyId(null);
   }
 
   async function loadAnnouncements() {
@@ -706,6 +724,45 @@ export default function Admin({ onBack }) {
               <Plus size={14} /> Agregar premio
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Metas de referidos */}
+      {!loading && tab === 'milestones' && (
+        <div className="space-y-3">
+          {milestones.map((m, i) => (
+            <div key={m.id} className="card-glow rounded-2xl p-5 bg-[#0F0D14]">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display font-700">Meta {m.stage}</h3>
+                <label className="flex items-center gap-2 text-xs text-white/50">
+                  <input
+                    type="checkbox" checked={m.is_active}
+                    onChange={(e) => { const c = [...milestones]; c[i].is_active = e.target.checked; setMilestones(c); }}
+                  />
+                  Activa
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Referidos nuevos requeridos">
+                  <input type="number" value={m.required_referrals} onChange={(e) => {
+                    const c = [...milestones]; c[i].required_referrals = Number(e.target.value); setMilestones(c);
+                  }} className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                </Field>
+                <Field label="Recompensa ($)">
+                  <input type="number" value={m.reward_amount} onChange={(e) => {
+                    const c = [...milestones]; c[i].reward_amount = Number(e.target.value); setMilestones(c);
+                  }} className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono" />
+                </Field>
+              </div>
+              <button
+                onClick={() => saveMilestone(m)}
+                disabled={busyId === m.id}
+                className="w-full bg-white/10 text-sm font-semibold py-2 rounded-xl mt-4"
+              >
+                {busyId === m.id ? 'Guardando…' : 'Guardar cambios'}
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
