@@ -15,6 +15,8 @@ export default function Company({ onNavigate }) {
     <div className="min-h-screen px-6 py-8 pb-28">
       <img src="/logo.png" alt="Vadia" className="h-9 w-auto" />
 
+      <img src="/company-banner.jpg" alt="Vadia" className="w-full rounded-2xl mt-6" />
+
       <h1 className="font-display font-700 text-2xl mt-6 mb-1">Bienvenido a Vadia</h1>
 
       {/* Intro */}
