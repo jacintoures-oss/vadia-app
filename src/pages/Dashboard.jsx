@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Wallet, ArrowDownToLine, ArrowUpToLine, Disc3, BookOpen,
+  ArrowDownToLine, ArrowUpToLine, Disc3, BookOpen,
   Play, Users, Building2, LifeBuoy, ListChecks,
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
@@ -64,24 +64,18 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
     <div className="min-h-screen px-6 py-8 pb-28">
       <img src="/logo.png" alt="Vadia" className="h-9 w-auto" />
 
-      <p className="text-white/50 text-sm mt-4">Hola, {profile?.full_name?.split(' ')[0] || 'de nuevo'}</p>
-
       <img src="/company-banner.jpg" alt="Vadia" className="w-full rounded-2xl mt-4" />
 
-      {/* Saldo */}
-      <div className="card-glow rounded-2xl p-6 bg-[#0F0D14] mt-3">
-        <div className="flex items-center gap-2 text-white/50 text-xs mb-2">
-          <Wallet size={14} /> Saldo disponible
+      {/* Estado del paquete activo */}
+      {activePackage && (
+        <div className="card-glow rounded-2xl p-4 bg-[#0F0D14] mt-4 flex items-center justify-between">
+          <div>
+            <p className="text-white/50 text-xs">Paquete activo</p>
+            <p className="font-display font-700 text-sm">{activePackage.packages.name}</p>
+          </div>
+          <p className="text-white/40 text-xs">{videosLeft} de {activePackage.packages.videos_per_day} videos hoy</p>
         </div>
-        <p className="font-mono text-4xl font-700">
-          ${Number(profile?.available_balance || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-        </p>
-        {activePackage && (
-          <p className="text-white/40 text-xs mt-3">
-            {activePackage.packages.name} · {videosLeft} de {activePackage.packages.videos_per_day} videos hoy
-          </p>
-        )}
-      </div>
+      )}
 
       {/* Rejilla de accesos rápidos */}
       <div className="grid grid-cols-4 gap-x-2 gap-y-5 mt-7">
