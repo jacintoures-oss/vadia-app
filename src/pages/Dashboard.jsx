@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Wallet, ArrowDownToLine, ArrowUpToLine, Disc3, BookOpen,
-  Play, Users, Building2, LifeBuoy,
+  Play, Users, Building2, LifeBuoy, ListChecks,
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
@@ -10,6 +10,7 @@ const TILES = [
   { key: 'buy', label: 'Recarga', icon: ArrowUpToLine, color: '#2FE0B0' },
   { key: 'withdraw', label: 'Retiro', icon: ArrowDownToLine, color: '#F5A623' },
   { key: 'roulette', label: 'Ruleta Vadia', icon: Disc3, color: '#E0299B' },
+  { key: 'tasks', label: 'Tareas', icon: ListChecks, color: '#FFC93C' },
   { key: 'onboarding', label: 'Tutorial', icon: BookOpen, color: '#7C2FE0' },
   { key: 'watch', label: 'Ver videos', icon: Play, color: '#2F6FE0' },
   { key: 'referrals', label: 'Referidos', icon: Users, color: '#FFC93C' },
