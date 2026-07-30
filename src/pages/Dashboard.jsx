@@ -81,14 +81,16 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
             {img ? (
               <img src={img} alt={label} className="w-14 h-14 rounded-2xl object-contain" />
             ) : (
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{ background: `${color}22` }}
-              >
-                <Icon size={22} style={{ color }} />
-              </div>
+              <>
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  style={{ background: `${color}22` }}
+                >
+                  <Icon size={22} style={{ color }} />
+                </div>
+                <span className="text-[11px] text-white/60 text-center leading-tight">{label}</span>
+              </>
             )}
-            <span className="text-[11px] text-white/60 text-center leading-tight">{label}</span>
           </button>
         ))}
       </div>
