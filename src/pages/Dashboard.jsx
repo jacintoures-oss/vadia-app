@@ -4,12 +4,12 @@ import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
 
 const TILES = [
-  { key: 'buy', label: 'Recarga', img: '/icon-recarga.png' },
-  { key: 'withdraw', label: 'Retiro', img: '/icon-retiro.png' },
-  { key: 'roulette', label: 'Ruleta Vadia', img: '/icon-ruleta.png' },
-  { key: 'tasks', label: 'Tareas', img: '/icon-tareas.png' },
-  { key: 'onboarding', label: 'Tutorial', img: '/icon-tutorial.png' },
-  { key: 'watch', label: 'Ver videos', img: '/icon-videos.png' },
+  { key: 'buy', label: 'Recarga', img: '/btn-recarga.jpg' },
+  { key: 'withdraw', label: 'Retiro', img: '/btn-retiro.jpg' },
+  { key: 'roulette', label: 'Ruleta Vadia', img: '/btn-ruleta.jpg' },
+  { key: 'tasks', label: 'Tareas', img: '/btn-tareas.jpg' },
+  { key: 'onboarding', label: 'Tutorial', img: '/btn-tutorial.jpg' },
+  { key: 'watch', label: 'Ver videos', img: '/btn-videos.jpg' },
   { key: 'referrals', label: 'Referidos', icon: Users, color: '#FFC93C' },
   { key: 'company', label: 'Empresa', icon: Building2, color: '#E0592F' },
   { key: 'support', label: 'Soporte', icon: LifeBuoy, color: '#2FE0B0' },
@@ -79,7 +79,7 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
         {TILES.map(({ key, label, icon: Icon, img, color }) => (
           <button key={key} onClick={() => onNavigate(key)} className="flex flex-col items-center gap-2">
             {img ? (
-              <img src={img} alt={label} className="w-14 h-14 rounded-2xl object-cover" />
+              <img src={img} alt={label} className="w-14 h-14 rounded-2xl object-contain" />
             ) : (
               <div
                 className="w-14 h-14 rounded-2xl flex items-center justify-center"
