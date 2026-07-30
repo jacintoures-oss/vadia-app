@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import {
-  ArrowDownToLine, ArrowUpToLine, Disc3, BookOpen,
-  Play, Users, Building2, LifeBuoy, ListChecks,
-} from 'lucide-react';
+import { Users, Building2, LifeBuoy } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
 
-const TILES = [
-  { key: 'buy', label: 'Recarga', icon: ArrowUpToLine, color: '#2FE0B0' },
-  { key: 'withdraw', label: 'Retiro', icon: ArrowDownToLine, color: '#F5A623' },
-  { key: 'roulette', label: 'Ruleta Vadia', icon: Disc3, color: '#E0299B' },
-  { key: 'tasks', label: 'Tareas', icon: ListChecks, color: '#FFC93C' },
-  { key: 'onboarding', label: 'Tutorial', icon: BookOpen, color: '#7C2FE0' },
-  { key: 'watch', label: 'Ver videos', icon: Play, color: '#2F6FE0' },
+const BANNER_BUTTONS = [
+  { key: 'buy', img: '/btn-recarga.jpg' },
+  { key: 'onboarding', img: '/btn-tutorial.jpg' },
+  { key: 'roulette', img: '/btn-ruleta.jpg' },
+  { key: 'tasks', img: '/btn-tareas.jpg' },
+  { key: 'withdraw', img: '/btn-retiro.jpg' },
+  { key: 'watch', img: '/btn-videos.jpg' },
+];
+
+const ICON_TILES = [
   { key: 'referrals', label: 'Referidos', icon: Users, color: '#FFC93C' },
   { key: 'company', label: 'Empresa', icon: Building2, color: '#E0592F' },
   { key: 'support', label: 'Soporte', icon: LifeBuoy, color: '#2FE0B0' },
@@ -77,9 +77,18 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
         </div>
       )}
 
-      {/* Rejilla de accesos rápidos */}
-      <div className="grid grid-cols-4 gap-x-2 gap-y-5 mt-7">
-        {TILES.map(({ key, label, icon: Icon, color }) => (
+      {/* Banners de accesos principales */}
+      <div className="flex flex-col gap-3 mt-7">
+        {BANNER_BUTTONS.map(({ key, img }) => (
+          <button key={key} onClick={() => onNavigate(key)} className="w-full rounded-2xl overflow-hidden">
+            <img src={img} alt={key} className="w-full h-auto block" />
+          </button>
+        ))}
+      </div>
+
+      {/* Accesos restantes */}
+      <div className="grid grid-cols-3 gap-x-2 gap-y-5 mt-7">
+        {ICON_TILES.map(({ key, label, icon: Icon, color }) => (
           <button key={key} onClick={() => onNavigate(key)} className="flex flex-col items-center gap-2">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center"
