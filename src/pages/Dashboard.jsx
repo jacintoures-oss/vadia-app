@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Users, Building2, LifeBuoy } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
 
@@ -10,9 +9,9 @@ const TILES = [
   { key: 'tasks', label: 'Tareas', img: '/btn-tareas.jpg' },
   { key: 'onboarding', label: 'Tutorial', img: '/btn-tutorial.jpg' },
   { key: 'watch', label: 'Ver videos', img: '/btn-videos.jpg' },
-  { key: 'referrals', label: 'Referidos', icon: Users, color: '#FFC93C' },
-  { key: 'company', label: 'Empresa', icon: Building2, color: '#E0592F' },
-  { key: 'support', label: 'Soporte', icon: LifeBuoy, color: '#2FE0B0' },
+  { key: 'referrals', label: 'Referidos', img: '/btn-referidos.jpg' },
+  { key: 'company', label: 'Empresa', img: '/btn-empresa.jpg' },
+  { key: 'support', label: 'Soporte', img: '/btn-soporte.jpg' },
 ];
 
 export default function Dashboard({ userId, onLogout, onNavigate }) {
