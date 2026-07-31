@@ -78,7 +78,7 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
         {TILES.map(({ key, label, icon: Icon, img, color }) => (
           <button key={key} onClick={() => onNavigate(key)} className="flex flex-col items-center gap-2">
             {img ? (
-              <img src={img} alt={label} className="w-14 h-14 rounded-2xl object-contain" />
+              <img src={img} alt={label} className="w-full h-20 rounded-2xl object-contain" />
             ) : (
               <>
                 <div
