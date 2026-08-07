@@ -3,11 +3,11 @@ import { Copy, Check, Users } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
 
-const LEVEL_RATES = { 1: '10%', 2: '3%', 3: '1%' };
+const LEVEL_RATES = { 1: '10% + 3%', 2: '3% + 2%', 3: '1% + 3%' };
 
 export default function Referrals({ userId, onNavigate }) {
   const [profile, setProfile] = useState(null);
-  const [referredUsers, setReferredUsers] = useState([]); // {level, full_name, phone, created_at}
+  const [referredUsers, setReferredUsers] = useState([]);
   const [earningsByLevel, setEarningsByLevel] = useState({ 1: 0, 2: 0, 3: 0 });
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -40,11 +40,16 @@ export default function Referrals({ userId, onNavigate }) {
       }))
     );
 
+    // Incluye tanto la comisión por compra de paquete (referral_lX)
+    // como la comisión por tareas diarias de los referidos (task_commission_lX)
     const { data: earnings } = await supabase
       .from('earnings')
       .select('type, amount')
       .eq('user_id', userId)
-      .in('type', ['referral_l1', 'referral_l2', 'referral_l3']);
+      .in('type', [
+        'referral_l1', 'referral_l2', 'referral_l3',
+        'task_commission_l1', 'task_commission_l2', 'task_commission_l3',
+      ]);
 
     const totals = { 1: 0, 2: 0, 3: 0 };
     (earnings || []).forEach((e) => {
@@ -75,7 +80,7 @@ export default function Referrals({ userId, onNavigate }) {
       <img src="/logo.png" alt="Vadia" className="h-9 w-auto" />
 
       <h1 className="font-display font-700 text-2xl mt-6 mb-1">Invita y gana</h1>
-      <p className="text-white/50 text-sm mb-6">10% nivel 1 · 3% nivel 2 · 1% nivel 3</p>
+      <p className="text-white/50 text-sm mb-6">Comisión por paquete + comisión por tareas diarias</p>
 
       {/* Código + link */}
       <div className="card-glow rounded-2xl p-6 bg-[#0F0D14]">
