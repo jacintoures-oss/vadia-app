@@ -4,31 +4,28 @@ import { supabase } from '../lib/supabaseClient';
 
 export default function BuyPackage({ userId, onBack, onRequested }) {
   const [packages, setPackages] = useState([]);
-  const [profile, setProfile] = useState(null);
   const [activePackage, setActivePackage] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [requestedPkg, setRequestedPkg] = useState(null);
-  const scrollerRef = useRef(null);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     load();
   }, []);
 
   async function load() {
-    const [{ data: pkgs }, { data: profileData }, { data: pkgData }] = await Promise.all([
+    const [{ data: pkgs }, { data: pkgData }] = await Promise.all([
       supabase.from('packages').select('*').eq('is_active', true).order('price'),
-      supabase.from('profiles').select('total_earned').eq('id', userId).single(),
       supabase.from('user_packages').select('package_id').eq('user_id', userId).eq('is_active', true).maybeSingle(),
     ]);
     setPackages(pkgs || []);
-    setProfile(profileData);
     setActivePackage(pkgData);
   }
 
   function handleScroll() {
-    const el = scrollerRef.current;
+    const el = scrollRef.current;
     if (!el) return;
     const cardWidth = el.firstChild?.offsetWidth || 1;
     const gap = 12;
@@ -97,7 +94,7 @@ export default function BuyPackage({ userId, onBack, onRequested }) {
 
       {/* Carrusel deslizable */}
       <div
-        ref={scrollerRef}
+        ref={scrollRef}
         onScroll={handleScroll}
         className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-6 px-6"
         style={{ scrollbarWidth: 'none' }}
@@ -149,8 +146,8 @@ export default function BuyPackage({ userId, onBack, onRequested }) {
             <p className="text-white/40 text-xs mt-1">Ganancias diarias</p>
           </div>
           <div className="card-glow rounded-2xl p-5 bg-[#0F0D14] text-center">
-            <p className="font-mono text-2xl font-700 text-[#F5A623]">${Number(profile?.total_earned || 0).toLocaleString('es-MX')}</p>
-            <p className="text-white/40 text-xs mt-1">Mis ganancias</p>
+            <p className="font-mono text-2xl font-700 text-[#F5A623]">${Number(selected.price_per_video).toLocaleString('es-MX')}</p>
+            <p className="text-white/40 text-xs mt-1">Pago por video</p>
           </div>
         </div>
       )}
