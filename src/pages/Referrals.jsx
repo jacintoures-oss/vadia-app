@@ -3,7 +3,7 @@ import { Copy, Check, Users } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
 
-const LEVEL_RATES = { 1: '10% + 3%', 2: '3% + 2%', 3: '1% + 3%' };
+const LEVEL_RATES = { 1: '10% + 3%', 2: '3% + 2%', 3: '1% + 1%' };
 
 export default function Referrals({ userId, onNavigate }) {
   const [profile, setProfile] = useState(null);
