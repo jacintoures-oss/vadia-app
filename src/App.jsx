@@ -15,6 +15,7 @@ import Support from './pages/Support';
 import Onboarding from './pages/Onboarding';
 import SettingsPage from './pages/Settings';
 import WithdrawalPassword from './pages/WithdrawalPassword';
+import BankAccount from './pages/BankAccount';
 import Tasks from './pages/Tasks';
 import { supabase } from './lib/supabaseClient';
 
@@ -24,7 +25,7 @@ export default function App() {
   const [view, setView] = useState('landing');
   const [authMode, setAuthMode] = useState('login');
   const [userId, setUserId] = useState(null);
-  const [adminStatus, setAdminStatus] = useState('checking'); // 'checking' | 'admin' | 'denied' | 'error'
+  const [adminStatus, setAdminStatus] = useState('checking');
   const [debugMsg, setDebugMsg] = useState('');
   const [balance, setBalance] = useState(0);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -119,7 +120,7 @@ export default function App() {
   if (userId) {
     if (view === 'buy') return <BuyPackage userId={userId} onBack={goDashboard} onRequested={goDashboard} />;
     if (view === 'watch') return <WatchVideo onBack={goDashboard} onDone={goDashboard} />;
-    if (view === 'withdraw') return <Withdraw balance={balance} onBack={goDashboard} onDone={goDashboard} onNavigate={setView} />;
+    if (view === 'withdraw') return <Withdraw userId={userId} balance={balance} onBack={goDashboard} onDone={goDashboard} onNavigate={setView} />;
     if (view === 'referrals') return <Referrals userId={userId} onNavigate={setView} />;
     if (view === 'account') return <Account userId={userId} onLogout={handleLogout} onNavigate={setView} />;
     if (view === 'company') return <Company onNavigate={setView} />;
@@ -128,7 +129,8 @@ export default function App() {
     if (view === 'support') return <Support userId={userId} onBack={() => setView('account')} />;
     if (view === 'onboarding') return <Onboarding userId={userId} onFinish={goDashboard} />;
     if (view === 'settings') return <SettingsPage userId={userId} onBack={() => setView('account')} onLogout={handleLogout} onNavigate={setView} />;
-    if (view === 'withdrawal-password') return <WithdrawalPassword onBack={() => setView('settings')} />;
+    if (view === 'withdrawal-password') return <WithdrawalPassword onBack={() => setView('withdraw')} />;
+    if (view === 'bank-account') return <BankAccount userId={userId} onBack={() => setView('withdraw')} onNavigate={setView} />;
     if (view === 'tasks') return <Tasks onBack={goDashboard} />;
     return <Dashboard key={refreshKey} userId={userId} onLogout={handleLogout} onNavigate={setView} />;
   }
