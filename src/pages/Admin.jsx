@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2, ImagePlus, Film, ListChecks } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Clock, History, LayoutGrid, Package, Settings, Wallet, Megaphone, ScrollText, Ban, Pencil, Disc3, Plus, Trash2, ImagePlus, Film, ListChecks, Landmark } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const TABS = [
@@ -110,29 +110,19 @@ export default function Admin({ onBack }) {
     setVideos(data || []);
   }
 
+  async function loadPrizes() {
+    const { data } = await supabase.from('roulette_prizes').select('*').order('amount');
+    setPrizes(data || []);
+  }
+
   async function loadMilestones() {
     const { data } = await supabase.from('referral_milestones').select('*').order('stage');
     setMilestones(data || []);
   }
 
-  async function saveMilestone(m) {
-    setBusyId(m.id);
-    await supabase.from('referral_milestones').update({
-      required_referrals: m.required_referrals,
-      reward_amount: m.reward_amount,
-      is_active: m.is_active,
-    }).eq('id', m.id);
-    setBusyId(null);
-  }
-
   async function loadAnnouncements() {
     const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
     setAnnouncements(data || []);
-  }
-
-  async function loadPrizes() {
-    const { data } = await supabase.from('roulette_prizes').select('*').order('amount');
-    setPrizes(data || []);
   }
 
   async function loadLogs() {
@@ -169,7 +159,6 @@ export default function Admin({ onBack }) {
     setBusyId(null);
   }
 
-  // Acepta un link completo de YouTube o solo el código, y siempre saca el código
   function extractYoutubeId(input) {
     const trimmed = input.trim();
     const patterns = [
@@ -179,7 +168,6 @@ export default function Admin({ onBack }) {
       const m = trimmed.match(p);
       if (m) return m[1];
     }
-    // Si no coincide con ningún patrón de link, asumimos que ya es el código de 11 caracteres
     return trimmed;
   }
 
@@ -262,6 +250,14 @@ export default function Admin({ onBack }) {
     setBusyId(null);
   }
 
+  async function resetBankAccount(u) {
+    if (!confirm(`¿Liberar la cuenta bancaria de ${u.full_name || u.phone}? Podrá configurar una nueva.`)) return;
+    setBusyId(u.id);
+    await supabase.rpc('admin_reset_bank_account', { p_user_id: u.id });
+    await loadUsers();
+    setBusyId(null);
+  }
+
   async function savePrize(prize) {
     setBusyId(prize.id);
     await supabase.from('roulette_prizes').update({
@@ -329,6 +325,16 @@ export default function Admin({ onBack }) {
     } catch (err) {
       alert('No se pudo subir la imagen. Intenta de nuevo.');
     }
+    setBusyId(null);
+  }
+
+  async function saveMilestone(m) {
+    setBusyId(m.id);
+    await supabase.from('referral_milestones').update({
+      required_referrals: m.required_referrals,
+      reward_amount: m.reward_amount,
+      is_active: m.is_active,
+    }).eq('id', m.id);
     setBusyId(null);
   }
 
@@ -436,6 +442,7 @@ export default function Admin({ onBack }) {
                     </p>
                   )}
                   <p className="text-white/40 text-xs font-mono">{u.phone}</p>
+                  {u.bank_clabe && <p className="text-white/30 text-[10px] font-mono mt-0.5">🏦 {u.bank_name} · {u.bank_clabe}</p>}
                 </div>
                 <div className="text-right">
                   <p className="font-mono text-sm text-[#2FE0B0]">${Number(u.available_balance).toLocaleString('es-MX')}</p>
@@ -443,7 +450,7 @@ export default function Admin({ onBack }) {
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-2 pt-2 border-t border-white/10">
+              <div className="flex gap-3 mt-2 pt-2 border-t border-white/10 flex-wrap">
                 {editUserId === u.id ? (
                   <>
                     <button onClick={() => saveUserEdit(u.id)} disabled={busyId === u.id} className="text-[#2FE0B0] text-[11px] font-semibold">Guardar</button>
@@ -464,6 +471,15 @@ export default function Admin({ onBack }) {
                     >
                       <Ban size={11} /> {u.is_banned ? 'Quitar ban' : 'Banear'}
                     </button>
+                    {u.bank_clabe && (
+                      <button
+                        onClick={() => resetBankAccount(u)}
+                        disabled={busyId === u.id}
+                        className="flex items-center gap-1 text-[11px] text-[#F5A623]"
+                      >
+                        <Landmark size={11} /> Liberar cuenta bancaria
+                      </button>
+                    )}
                   </>
                 )}
               </div>
@@ -698,7 +714,6 @@ export default function Admin({ onBack }) {
             );
           })()}
 
-          {/* Agregar premio nuevo */}
           <form onSubmit={addPrize} className="card-glow rounded-2xl p-4 bg-[#0F0D14] space-y-2">
             <p className="text-white/50 text-xs mb-1">Agregar premio nuevo</p>
             <div className="grid grid-cols-2 gap-2">
@@ -828,7 +843,7 @@ export default function Admin({ onBack }) {
       {!loading && tab === 'settings' && settings && (
         <div className="card-glow rounded-2xl p-5 bg-[#0F0D14] space-y-4">
           <div>
-            <p className="text-white/50 text-xs mb-2">Comisiones de referidos (%)</p>
+            <p className="text-white/50 text-xs mb-2">Comisiones de referidos por paquete (%)</p>
             <div className="grid grid-cols-3 gap-2">
               {[1, 2, 3].map((lvl) => (
                 <Field key={lvl} label={`Nivel ${lvl}`}>
