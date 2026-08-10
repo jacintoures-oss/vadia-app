@@ -4,9 +4,8 @@ import { supabase, phoneToInternalEmail } from '../lib/supabaseClient';
 
 export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
   const [profile, setProfile] = useState(null);
-  const [editField, setEditField] = useState(null); // 'name' | 'clabe' | 'password' | null
+  const [editField, setEditField] = useState(null); // 'name' | 'password' | null
   const [nameInput, setNameInput] = useState('');
-  const [clabeInput, setClabeInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -21,7 +20,6 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data);
     setNameInput(data?.full_name || '');
-    setClabeInput(data?.bank_clabe || '');
   }
 
   async function handleAvatarUpload(e) {
@@ -50,14 +48,6 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
     setBusy(false);
   }
 
-  async function saveClabe() {
-    setBusy(true);
-    await supabase.from('profiles').update({ bank_clabe: clabeInput }).eq('id', userId);
-    setProfile((p) => ({ ...p, bank_clabe: clabeInput }));
-    setEditField(null);
-    setBusy(false);
-  }
-
   async function savePassword() {
     if (!currentPasswordInput) {
       setMsg('Ingresa tu contraseña actual.');
@@ -70,7 +60,6 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
     setBusy(true);
     setMsg('');
 
-    // 1. Verificamos que la contraseña actual sea correcta
     const { error: verifyError } = await supabase.auth.signInWithPassword({
       email: phoneToInternalEmail(profile.phone),
       password: currentPasswordInput,
@@ -81,13 +70,21 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
       return;
     }
 
-    // 2. Si es correcta, actualizamos a la nueva
     const { error } = await supabase.auth.updateUser({ password: passwordInput });
     setMsg(error ? 'No se pudo cambiar. Intenta de nuevo.' : '¡Contraseña actualizada!');
     setCurrentPasswordInput('');
     setPasswordInput('');
     setBusy(false);
     if (!error) setTimeout(() => setEditField(null), 1200);
+  }
+
+  async function handleLogoutClick() {
+    await supabase.auth.signOut();
+    onLogout();
+  }
+
+  if (!profile) {
+    return <div className="min-h-screen flex items-center justify-center text-white/50">Cargando…</div>;
   }
 
   return (
@@ -118,21 +115,14 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
           <span className="font-mono text-sm">{profile?.phone}</span>
         </div>
 
-        {/* Cuenta bancaria */}
-        <button onClick={() => setEditField(editField === 'clabe' ? null : 'clabe')} className="w-full flex items-center gap-3 px-4 py-4">
+        {/* Cuenta bancaria: pantalla aparte */}
+        <button onClick={() => onNavigate('bank-account')} className="w-full flex items-center gap-3 px-4 py-4">
           <Landmark size={16} className="text-white/40" />
-          <span className="text-sm flex-1 text-left">Cuenta bancaria (CLABE)</span>
+          <span className="text-sm flex-1 text-left">
+            Cuenta bancaria {profile?.bank_clabe && <span className="text-[#2FE0B0] text-[10px] ml-1">configurada</span>}
+          </span>
           <ChevronRight size={16} className="text-white/30" />
         </button>
-        {editField === 'clabe' && (
-          <div className="px-4 pb-4 flex gap-2">
-            <input
-              value={clabeInput} onChange={(e) => setClabeInput(e.target.value)} placeholder="18 dígitos"
-              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono"
-            />
-            <button onClick={saveClabe} disabled={busy} className="bg-[#2FE0B0] text-black text-xs font-semibold px-3 rounded-lg">Guardar</button>
-          </div>
-        )}
 
         {/* Nombre real */}
         <button onClick={() => setEditField(editField === 'name' ? null : 'name')} className="w-full flex items-center gap-3 px-4 py-4">
@@ -150,7 +140,7 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
           </div>
         )}
 
-        {/* Contraseña */}
+        {/* Contraseña de sesión */}
         <button onClick={() => setEditField(editField === 'password' ? null : 'password')} className="w-full flex items-center gap-3 px-4 py-4">
           <KeyRound size={16} className="text-white/40" />
           <span className="text-sm flex-1 text-left">Cambiar contraseña</span>
@@ -177,7 +167,7 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
           </div>
         )}
 
-        {/* Clave de retiro: pantalla aparte, no desplegable */}
+        {/* Clave de retiro: pantalla aparte */}
         <button onClick={() => onNavigate('withdrawal-password')} className="w-full flex items-center gap-3 px-4 py-4">
           <ShieldCheck size={16} className="text-white/40" />
           <span className="text-sm flex-1 text-left">
@@ -188,7 +178,7 @@ export default function SettingsPage({ userId, onBack, onLogout, onNavigate }) {
       </div>
 
       <button
-        onClick={onLogout}
+        onClick={handleLogoutClick}
         className="w-full flex items-center justify-center gap-2 border border-white/15 text-white/70 font-semibold py-3.5 rounded-xl mt-8"
       >
         <LogOut size={16} /> Cerrar sesión
