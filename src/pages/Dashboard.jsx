@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import BottomNav from './BottomNav';
+import AnnouncementPopup from './AnnouncementPopup';
 
 const TILES = [
   { key: 'buy', label: 'Recarga', img: '/btn-recarga.jpg' },
@@ -58,6 +59,8 @@ export default function Dashboard({ userId, onLogout, onNavigate }) {
 
   return (
     <div className="min-h-screen px-6 py-8 pb-28">
+      <AnnouncementPopup userId={userId} onNavigate={onNavigate} />
+
       <img src="/logo.png" alt="Vadia" className="h-9 w-auto" />
 
       <img src="/company-banner.jpg" alt="Vadia" className="w-full rounded-2xl mt-4" />
