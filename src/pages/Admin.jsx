@@ -27,7 +27,7 @@ export default function Admin({ onBack }) {
   const [packages, setPackages] = useState([]);
   const [settings, setSettings] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
-  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '' });
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', image_url: '', show_as_popup: false });
   const [logs, setLogs] = useState([]);
   const [editUserId, setEditUserId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -223,8 +223,25 @@ export default function Admin({ onBack }) {
     if (!newAnnouncement.title.trim() || !newAnnouncement.body.trim()) return;
     setBusyId('announcement');
     await supabase.from('announcements').insert(newAnnouncement);
-    setNewAnnouncement({ title: '', body: '' });
+    setNewAnnouncement({ title: '', body: '', image_url: '', show_as_popup: false });
     await loadAnnouncements();
+    setBusyId(null);
+  }
+
+  async function handleAnnouncementImageUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusyId('announcement-img');
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `announcement-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('announcement-images').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('announcement-images').getPublicUrl(path);
+      setNewAnnouncement((a) => ({ ...a, image_url: data.publicUrl }));
+    } catch (err) {
+      alert('No se pudo subir la imagen. Intenta de nuevo.');
+    }
     setBusyId(null);
   }
 
@@ -795,6 +812,18 @@ export default function Admin({ onBack }) {
               onChange={(e) => setNewAnnouncement({ ...newAnnouncement, body: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm resize-none"
             />
+            <label className="flex items-center justify-center gap-1.5 w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm cursor-pointer text-white/60">
+              <ImagePlus size={14} />
+              {busyId === 'announcement-img' ? 'Subiendo…' : (newAnnouncement.image_url ? 'Imagen lista ✓' : 'Subir imagen (opcional)')}
+              <input type="file" accept="image/*" className="hidden" onChange={handleAnnouncementImageUpload} />
+            </label>
+            <label className="flex items-center gap-2 text-xs text-white/50">
+              <input
+                type="checkbox" checked={newAnnouncement.show_as_popup}
+                onChange={(e) => setNewAnnouncement({ ...newAnnouncement, show_as_popup: e.target.checked })}
+              />
+              Mostrar como ventana emergente al iniciar sesión
+            </label>
             <button
               type="submit" disabled={busyId === 'announcement'}
               className="w-full bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-2.5 rounded-xl text-sm disabled:opacity-50"
@@ -807,15 +836,19 @@ export default function Admin({ onBack }) {
             {announcements.map((a) => (
               <div key={a.id} className="bg-[#0F0D14] border border-white/10 rounded-xl px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-semibold">{a.title}</p>
+                  <p className="text-sm font-semibold flex items-center gap-1.5">
+                    {a.title}
+                    {a.show_as_popup && <span className="text-[9px] font-mono uppercase bg-[#7C2FE0]/20 text-[#7C2FE0] px-1.5 py-0.5 rounded-full">Popup</span>}
+                  </p>
                   <button
                     onClick={() => toggleAnnouncement(a)}
                     disabled={busyId === a.id}
-                    className={`text-[10px] px-2 py-0.5 rounded-full ${a.is_active ? 'bg-[#2FE0B0]/15 text-[#2FE0B0]' : 'bg-white/10 text-white/40'}`}
+                    className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${a.is_active ? 'bg-[#2FE0B0]/15 text-[#2FE0B0]' : 'bg-white/10 text-white/40'}`}
                   >
                     {a.is_active ? 'Activo' : 'Oculto'}
                   </button>
                 </div>
+                {a.image_url && <img src={a.image_url} alt="" className="w-full h-24 object-cover rounded-lg my-2" />}
                 <p className="text-white/50 text-xs">{a.body}</p>
               </div>
             ))}
