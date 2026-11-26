@@ -27,7 +27,7 @@ export default function Admin({ onBack }) {
   const [packages, setPackages] = useState([]);
   const [settings, setSettings] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
-  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', image_url: '', show_as_popup: false });
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: '', body: '', image_urls: [], show_as_popup: false });
   const [logs, setLogs] = useState([]);
   const [editUserId, setEditUserId] = useState(null);
   const [editName, setEditName] = useState('');
@@ -223,7 +223,7 @@ export default function Admin({ onBack }) {
     if (!newAnnouncement.title.trim() || !newAnnouncement.body.trim()) return;
     setBusyId('announcement');
     await supabase.from('announcements').insert(newAnnouncement);
-    setNewAnnouncement({ title: '', body: '', image_url: '', show_as_popup: false });
+    setNewAnnouncement({ title: '', body: '', image_urls: [], show_as_popup: false });
     await loadAnnouncements();
     setBusyId(null);
   }
@@ -238,11 +238,15 @@ export default function Admin({ onBack }) {
       const { error: uploadError } = await supabase.storage.from('announcement-images').upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from('announcement-images').getPublicUrl(path);
-      setNewAnnouncement((a) => ({ ...a, image_url: data.publicUrl }));
+      setNewAnnouncement((a) => ({ ...a, image_urls: [...a.image_urls, data.publicUrl] }));
     } catch (err) {
       alert('No se pudo subir la imagen. Intenta de nuevo.');
     }
     setBusyId(null);
+  }
+
+  function removeNewAnnouncementImage(idx) {
+    setNewAnnouncement((a) => ({ ...a, image_urls: a.image_urls.filter((_, i) => i !== idx) }));
   }
 
   async function toggleAnnouncement(a) {
@@ -363,7 +367,6 @@ export default function Admin({ onBack }) {
 
       <h1 className="font-display font-700 text-2xl mb-6">Panel admin</h1>
 
-      {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-white/10 overflow-x-auto">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
@@ -380,7 +383,6 @@ export default function Admin({ onBack }) {
 
       {loading && <p className="text-white/40 text-sm">Cargando…</p>}
 
-      {/* Resumen */}
       {!loading && tab === 'overview' && stats && (
         <div className="grid grid-cols-2 gap-3">
           <StatCard label="Usuarios totales" value={stats.totalUsers} />
@@ -392,7 +394,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Pendientes */}
       {!loading && tab === 'pending' && (
         <div className="space-y-3">
           {transactions.length === 0 && <p className="text-white/40 text-sm">No hay solicitudes pendientes.</p>}
@@ -438,7 +439,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Usuarios */}
       {!loading && tab === 'users' && (
         <div className="space-y-2">
           {users.length === 0 && <p className="text-white/40 text-sm">No hay usuarios todavía.</p>}
@@ -530,7 +530,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Historial */}
       {!loading && tab === 'history' && (
         <div className="space-y-2">
           {history.length === 0 && <p className="text-white/40 text-sm">Sin movimientos todavía.</p>}
@@ -553,7 +552,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Paquetes */}
       {!loading && tab === 'packages' && (
         <div className="space-y-3">
           {packages.map((pkg, i) => (
@@ -599,7 +597,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Videos */}
       {!loading && tab === 'videos' && (
         <div>
           <form onSubmit={addVideo} className="card-glow rounded-2xl p-4 bg-[#0F0D14] space-y-2 mb-5">
@@ -657,7 +654,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Ruleta */}
       {!loading && tab === 'roulette' && (
         <div>
           {(() => {
@@ -759,7 +755,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Metas de referidos */}
       {!loading && tab === 'milestones' && (
         <div className="space-y-3">
           {milestones.map((m, i) => (
@@ -798,7 +793,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Notificaciones */}
       {!loading && tab === 'announcements' && (
         <div>
           <form onSubmit={sendAnnouncement} className="card-glow rounded-2xl p-5 bg-[#0F0D14] mb-5 space-y-3">
@@ -808,22 +802,41 @@ export default function Admin({ onBack }) {
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm"
             />
             <textarea
-              placeholder="Mensaje para todos los usuarios" rows={3} value={newAnnouncement.body}
+              placeholder="Mensaje (se usa en la lista de Avisos; no se muestra en el popup)" rows={3} value={newAnnouncement.body}
               onChange={(e) => setNewAnnouncement({ ...newAnnouncement, body: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm resize-none"
             />
+
+            {newAnnouncement.image_urls.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {newAnnouncement.image_urls.map((url, i) => (
+                  <div key={i} className="relative">
+                    <img src={url} alt="" className="w-full h-16 object-cover rounded-lg" />
+                    <button
+                      type="button" onClick={() => removeNewAnnouncementImage(i)}
+                      className="absolute -top-1.5 -right-1.5 bg-[#E0299B] rounded-full p-0.5"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <label className="flex items-center justify-center gap-1.5 w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm cursor-pointer text-white/60">
               <ImagePlus size={14} />
-              {busyId === 'announcement-img' ? 'Subiendo…' : (newAnnouncement.image_url ? 'Imagen lista ✓' : 'Subir imagen (opcional)')}
+              {busyId === 'announcement-img' ? 'Subiendo…' : 'Agregar imagen'}
               <input type="file" accept="image/*" className="hidden" onChange={handleAnnouncementImageUpload} />
             </label>
+
             <label className="flex items-center gap-2 text-xs text-white/50">
               <input
                 type="checkbox" checked={newAnnouncement.show_as_popup}
                 onChange={(e) => setNewAnnouncement({ ...newAnnouncement, show_as_popup: e.target.checked })}
               />
-              Mostrar como ventana emergente al iniciar sesión
+              Mostrar como ventana emergente al iniciar sesión (solo imágenes, sin texto)
             </label>
+
             <button
               type="submit" disabled={busyId === 'announcement'}
               className="w-full bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-2.5 rounded-xl text-sm disabled:opacity-50"
@@ -848,7 +861,13 @@ export default function Admin({ onBack }) {
                     {a.is_active ? 'Activo' : 'Oculto'}
                   </button>
                 </div>
-                {a.image_url && <img src={a.image_url} alt="" className="w-full h-24 object-cover rounded-lg my-2" />}
+                {a.image_urls?.length > 0 && (
+                  <div className="grid grid-cols-3 gap-1.5 my-2">
+                    {a.image_urls.map((url, i) => (
+                      <img key={i} src={url} alt="" className="w-full h-14 object-cover rounded-lg" />
+                    ))}
+                  </div>
+                )}
                 <p className="text-white/50 text-xs">{a.body}</p>
               </div>
             ))}
@@ -856,7 +875,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Bitácora */}
       {!loading && tab === 'logs' && (
         <div className="space-y-2">
           {logs.length === 0 && <p className="text-white/40 text-sm">Sin actividad registrada.</p>}
@@ -872,7 +890,6 @@ export default function Admin({ onBack }) {
         </div>
       )}
 
-      {/* Configuración */}
       {!loading && tab === 'settings' && settings && (
         <div className="card-glow rounded-2xl p-5 bg-[#0F0D14] space-y-4">
           <div>
