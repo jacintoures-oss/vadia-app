@@ -50,29 +50,32 @@ export default function AnnouncementPopup({ userId, onNavigate }) {
 
   if (!announcement) return null;
 
+  const images = announcement.image_urls?.length ? announcement.image_urls : (announcement.image_url ? [announcement.image_url] : []);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6">
-      <div className="w-full max-w-sm bg-[#0F0D14] rounded-3xl overflow-hidden border border-white/10">
-        {announcement.image_url && (
-          <img src={announcement.image_url} alt="" className="w-full h-40 object-cover" />
-        )}
-        <div className="p-6">
-          <h2 className="font-display font-700 text-lg mb-2">{announcement.title}</h2>
-          <p className="text-white/60 text-sm leading-relaxed mb-6">{announcement.body}</p>
-          <div className="flex gap-3">
-            <button
-              onClick={close}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-white/10 font-semibold py-3 rounded-xl text-sm"
-            >
-              <X size={15} /> Cerrar
-            </button>
-            <button
-              onClick={seeDetails}
-              className="flex-1 bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-3 rounded-xl text-sm"
-            >
-              Detalles
-            </button>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 py-10">
+      <div className="w-full max-w-sm bg-[#0F0D14] rounded-3xl overflow-hidden border border-white/10 flex flex-col max-h-full">
+        {/* Solo imágenes, deslizable */}
+        <div className="overflow-y-auto flex-1">
+          {images.map((url, i) => (
+            <img key={i} src={url} alt="" className="w-full h-auto block" />
+          ))}
+        </div>
+
+        {/* Botones */}
+        <div className="flex gap-3 p-4 border-t border-white/10 shrink-0">
+          <button
+            onClick={close}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-white/10 font-semibold py-3 rounded-xl text-sm"
+          >
+            <X size={15} /> Cerrar
+          </button>
+          <button
+            onClick={seeDetails}
+            className="flex-1 bg-gradient-to-r from-[#7C2FE0] via-[#E0299B] to-[#F5A623] font-semibold py-3 rounded-xl text-sm"
+          >
+            Detalles
+          </button>
         </div>
       </div>
     </div>
